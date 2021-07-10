@@ -64,7 +64,6 @@ export default function MathSolver() {
     infix = infix.replace(/\s+/g, '');
     // eslint-disable-next-line no-useless-escape
     infix = infix.split(/([\+\-\*\/\^\(\)\√])/);
-    console.log(infix);
     for (var i = 0; i < infix.length; i++) {
       var token = infix[i];
       if (!isNaN(token) || token === 'π') {
@@ -104,7 +103,6 @@ export default function MathSolver() {
   };
 
   this.resolveRPN = function (operation) {
-    console.log(operation);
     let aux = [];
     for (let i = 0; i < operation.length; i++) {
       if (
@@ -118,56 +116,64 @@ export default function MathSolver() {
         }
       } else {
         let a = aux.pop();
-        let b = aux.pop();
+        let b;
+        if ('lglnarctansin'.indexOf(operation[i]) === -1) {
+          b = aux.pop();
+        }
         switch (operation[i]) {
           case '*':
-            aux.push(a * Number(b));
+            aux.push(Number(a) * Number(b));
             break;
           case '/':
-            aux.push(Number(b) / a);
+            aux.push(Number(b) / Number(a));
             break;
           case '+':
-            aux.push(a + Number(b));
+            aux.push(Number(a) + Number(b));
             break;
           case '-':
             if (b === undefined) {
-              aux.push(a * -1);
+              aux.push(Number(a) * -1);
             } else {
-              aux.push(Number(b) - a);
+              aux.push(Number(b) - Number(a));
             }
             break;
           case '^':
-            aux.push(Math.pow(Number(b), a));
+            aux.push(Math.pow(Number(b), Number(a)));
             break;
           case '√':
             aux.push(Math.sqrt(Number(a)));
             break;
           case 'lg':
-            aux.push(Math.log10(a));
+            aux.push(Math.log10(Number(a)));
             break;
           case 'ln':
-            aux.push(Math.log(a));
-            break;
-          case 'lg':
-            aux.push(Math.log10(a));
+            aux.push(Math.log(Number(a)));
             break;
           case 'tan':
-            aux.push(Math.tan(a));
+            if (a === Math.PI) {
+              aux.push(0);
+            } else {
+              aux.push(Math.tan(Number(a)));
+            }
             break;
           case 'sin':
-            aux.push(Math.sin(a));
+            if (a === Math.PI) {
+              aux.push(0);
+            } else {
+              aux.push(Math.sin(Number(a)));
+            }
             break;
           case 'cos':
-            aux.push(Math.cos(a));
+            aux.push(Math.cos(Number(a)));
             break;
           case 'arctan':
-            aux.push(Math.atan(a));
+            aux.push(Math.atan(Number(a)));
             break;
           case 'arcsin':
-            aux.push(Math.asin(a));
+            aux.push(Math.asin(Number(a)));
             break;
           case 'arccos':
-            aux.push(Math.acos(a));
+            aux.push(Math.acos(Number(a)));
             break;
         }
       }
@@ -225,6 +231,9 @@ export default function MathSolver() {
     }
     // ADD BASE 10 LOGARITHM AND NATURAL LOGARITHM
     else if (['Lg', 'Ln'].indexOf(input) >= 0) {
+      if (localOperation !== '0') {
+        cursorPos++;
+      }
       localOperation =
         operation.slice(0, cursorPos) +
         input.toLowerCase() +
@@ -300,10 +309,144 @@ export default function MathSolver() {
 
   this.resolveAdvanced = function (operation) {
     let localOperation = operation + '';
-    let split = localOperation.split(
-      /(?<=[\d.])(?=[^\d.])|(?<=[^\d.-])(?=[\d.-])|(?<=[+x\/])(?=[^+x\/])|(?<=[^+x\/])(?=[+x\/])/g,
-    );
-    console.log(split);
+    // let split = localOperation.split(
+    //   /(?<=[\d.])(?=[^\d.])|(?<=[^\d.-])(?=[\d.-])|(?<=[+x\/])(?=[^+x\/])|(?<=[^+x\/])(?=[+x\/])/g,
+    // );
     return localOperation;
+  };
+
+  this.simplifyOperation = function (speechList) {
+    let textLetras = true;
+    let operacion;
+    speechList.every(match => {
+      console.log({match});
+      textLetras = true;
+      if (!soloLetras(match)) {
+        textLetras = false;
+      }
+      if (!textLetras) {
+        let opTraducida = match.toLowerCase();
+        opTraducida = traducirOperacion(opTraducida);
+        if (opTraducida != null) {
+          operacion = opTraducida.replace(' ', '');
+          return false;
+        }
+      }
+      return true;
+    });
+    return operacion.replace(/ /g, '');
+  };
+
+  const soloLetras = text => {
+    if (text.includes(':') || text.includes('a las')) {
+      return true;
+    }
+    let chars = text.replace(/ /g, '').split('');
+    let soloL = true;
+    chars.every(c => {
+      if (c.charCodeAt(0) >= 48 && c.charCodeAt(0) <= 57) {
+        soloL = false;
+        return false;
+      }
+      return true;
+    });
+    return soloL;
+  };
+
+  const traducirOperacion = opTraducida => {
+    if (opTraducida.includes('menos')) {
+      opTraducida = opTraducida.replace('menos', '-');
+    }
+    if (opTraducida.includes('más') || opTraducida.includes('mas')) {
+      opTraducida = opTraducida.replace('más', '+');
+      opTraducida = opTraducida.replace('mas', '+');
+    }
+    opTraducida = opTraducida
+      .replace('--', '+')
+      .replace('+-', '-')
+      .replace('-+', '-')
+      .replace('++', '+')
+      .replace(',', '.')
+      .replace('- ', '-')
+      .replace('+ ', '+');
+    if (opTraducida.includes('*')) {
+      opTraducida = opTraducida.replace('*', 'x');
+    }
+    if (opTraducida.includes('por')) {
+      opTraducida = opTraducida.replace('por', 'x');
+    }
+    if (opTraducida.includes('dividido')) {
+      opTraducida = opTraducida.replace('dividido', '/');
+    }
+    if (opTraducida.includes('elevado a la') || opTraducida.includes('a la')) {
+      opTraducida = opTraducida.replace('elevado a la', '^');
+      opTraducida = opTraducida.replace('a la', '^');
+    }
+    if (opTraducida.includes('raíz cuadrada de')) {
+      opTraducida = opTraducida.replace('raíz cuadrada de', '√');
+    }
+    if (
+      opTraducida.includes('a el cuadrado') ||
+      opTraducida.includes('al cuadrado')
+    ) {
+      opTraducida = opTraducida.replace('a el cuadrado', '^2');
+      opTraducida = opTraducida.replace('al cuadrado', '^2');
+    }
+    if (opTraducida.includes('a el cubo') || opTraducida.includes('al cubo')) {
+      opTraducida = opTraducida.replace('a el cubo', '^3');
+      opTraducida = opTraducida.replace('al cubo', '^3');
+    }
+    if (opTraducida.includes('raíz de')) {
+      opTraducida = opTraducida.replace('raíz de', '√');
+    }
+    if (opTraducida.includes('pi')) {
+      opTraducida = opTraducida.replace(
+        'pi',
+        String.valueOf(Math.PI).substring(0, 10),
+      );
+    }
+    try {
+      opTraducida = deteccionFuncion('logaritmo natural', 'ln', opTraducida);
+      opTraducida = deteccionFuncion('logaritmo decimal', 'lg', opTraducida);
+      opTraducida = deteccionFuncion('logaritmo', 'lg', opTraducida);
+      opTraducida = deteccionFuncion('coseno inverso', 'arccos', opTraducida);
+      opTraducida = deteccionFuncion('coseno', 'cos', opTraducida);
+      opTraducida = deteccionFuncion('tangente inversa', 'arctan', opTraducida);
+      opTraducida = deteccionFuncion('tangente', 'tan', opTraducida);
+      opTraducida = deteccionFuncion('seno inverso', 'arcsin', opTraducida);
+      opTraducida = deteccionFuncion('seno', 'sin', opTraducida);
+    } catch (e) {
+      console.error(e);
+    }
+    return opTraducida;
+  };
+
+  const deteccionFuncion = (palabra, operador, opTraducida) => {
+    while (opTraducida.includes(palabra)) {
+      let split = opTraducida.split(
+        /(?<=[\d.])(?=[^\d.])|(?<=[^\d.])(?=[\d.])|(?<=[-+x/])(?=[^-+x/])|(?<=[^-+x/])(?=[-+x/])/,
+      );
+      let number = '0';
+      let posLog = -1;
+      for (let x = 0; x < split.length; x++) {
+        if (split[x].includes(palabra)) {
+          posLog = x;
+          if (split[x + 1].includes('-')) {
+            number = '-' + split[x + 2];
+            opTraducida = opTraducida.replace(
+              split[posLog] + split[posLog + 1] + split[posLog + 2],
+              operador + '(' + number + ')',
+            );
+          } else {
+            number = split[x + 1];
+            opTraducida = opTraducida.replace(
+              split[posLog] + split[posLog + 1],
+              operador + '(' + number + ')',
+            );
+          }
+        }
+      }
+    }
+    return opTraducida;
   };
 }

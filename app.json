@@ -1,4 +1,7 @@
 {
   "name": "SmartCalculator",
-  "displayName": "SmartCalculator"
+  "displayName": "SmartCalculator",
+  "expo": {
+    "plugins": ["@react-native-voice/voice"]
+  }
 }

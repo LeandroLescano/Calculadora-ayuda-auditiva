@@ -6,15 +6,25 @@ import {
   TouchableHighlight,
   StyleSheet,
 } from 'react-native';
+import {useFocusEffect} from '@react-navigation/native';
 import MathSolver from '../functions/MathSolver';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import Voice from '@react-native-voice/voice';
+import Recorder from '../functions/Recorder';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-export default function Basic({navigation}) {
-  const [result, setResult] = useState(0);
+export default function Basic({route, navigation}) {
+  const histOperation = route.params;
+  const [result, setResult] = useState('0');
   const [operation, setOperation] = useState('0');
   const [cursorPos, setCursorPos] = useState(1);
   const [showResult, setShowResult] = useState(false);
   const [firstZero, setFirstZero] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
+  const [history, setHistory] = useState({});
+  const MathResolver = useMemo(() => new MathSolver(), []);
+  const RecorderF = useMemo(() => new Recorder(), []);
+
   const operationInput = useRef(),
     resultText = useRef();
   const symbols = [
@@ -27,8 +37,6 @@ export default function Basic({navigation}) {
   ];
   const noRepeatSymbols = ['.', '/', '-', '+', 'x'];
 
-  const MathResolver = useMemo(() => new MathSolver(), []);
-
   const styles = StyleSheet.create({
     container: {
       flex: 1,
@@ -36,11 +44,16 @@ export default function Basic({navigation}) {
     },
     calculatorBasic: {
       flexDirection: 'row',
+      flex: 1,
     },
     inputText: {
       flex: 1,
       textAlign: 'right',
       fontSize: 60,
+    },
+    layoutCalculator: {
+      flex: 6,
+      flexDirection: 'column',
     },
     resultText: {
       flex: 1,
@@ -57,18 +70,86 @@ export default function Basic({navigation}) {
       marginVertical: 2,
       backgroundColor: '#1a1a1a',
       alignItems: 'center',
+      justifyContent: 'center',
+      height: '95%',
     },
     buttonText: {
-      fontSize: 50,
+      fontSize: 70,
       color: 'white',
     },
     iconButton: {
       paddingVertical: 3,
     },
+    recordingContainer: {
+      position: 'absolute',
+      height: '100%',
+      width: '100%',
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: 'rgba(0,0,0,0.5)',
+    },
+    textRecording: {
+      fontSize: 50,
+      paddingHorizontal: 10,
+      borderColor: 'black',
+      borderWidth: 2,
+      borderRadius: 25,
+      backgroundColor: 'white',
+    },
   });
 
   const onSelectionChange = ({nativeEvent: {selection, text}}) => {
     setCursorPos(selection.start);
+  };
+
+  useFocusEffect(
+    React.useCallback(() => {
+      if (histOperation !== undefined) {
+        setOperation(histOperation.params.operationHist);
+      }
+    }, [histOperation]),
+  );
+
+  useEffect(() => {
+    getHistory().then(data => {
+      setHistory(data);
+    });
+    operationInput.current.focus();
+    Voice.onSpeechStart = RecorderF.onSpeechStart;
+    Voice.onSpeechRecognized = RecorderF.onSpeechRecognized;
+    Voice.onSpeechEnd = RecorderF.onSpeechEnd;
+    Voice.onSpeechError = RecorderF.onSpeechError;
+    Voice.onSpeechResults = onSpeechResults;
+    Voice.onSpeechPartialResults = RecorderF.onSpeechPartialResults;
+    Voice.onSpeechVolumeChanged = RecorderF.onSpeechVolumeChanged;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const _startRecognizing = async () => {
+    try {
+      await Voice.start('es-ES');
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const _stopRecognizing = async () => {
+    try {
+      await Voice.stop();
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const onSpeechResults = e => {
+    let mounted = true;
+    if (mounted) {
+      setIsRecording(false);
+      console.log('onSpeechResults: ', e);
+      let operationTest = MathResolver.simplifyOperation(e.value);
+      setOperation(operationTest);
+    }
+    return () => (mounted = false);
   };
 
   const handleOperation = e => {
@@ -79,8 +160,17 @@ export default function Basic({navigation}) {
       return;
     }
     // SHOW RESULT
-    if (e === '=') {
+    if (e === 'M') {
+      if (isRecording) {
+        _stopRecognizing();
+        setIsRecording(false);
+      } else {
+        _startRecognizing();
+        setIsRecording(true);
+      }
+    } else if (e === '=') {
       setShowResult(true);
+      saveOperation(result);
       setFirstZero(false);
     } else {
       setShowResult(false);
@@ -94,6 +184,41 @@ export default function Basic({navigation}) {
       setOperation(resultOp[0]);
       setCursorPos(resultOp[1]);
       setFirstZero(resultOp[2]);
+    }
+  };
+
+  const saveOperation = async resultSave => {
+    let localHistory = history;
+    let repeat = false;
+    localHistory.list.map(op => {
+      if (op.operation === operation && op.result === result) {
+        repeat = true;
+        return;
+      }
+    });
+    if (!repeat && !isNaN(result)) {
+      try {
+        if (localHistory.list === undefined) {
+          localHistory = {list: [{operation: operation, result: resultSave}]};
+        } else {
+          if (Object.keys(localHistory.list).length === 10) {
+            localHistory.list.pop();
+          }
+          localHistory.list.unshift({operation: operation, result: resultSave});
+        }
+        await AsyncStorage.setItem('history', JSON.stringify(localHistory));
+      } catch (e) {
+        console.error(e);
+      }
+    }
+  };
+
+  const getHistory = async () => {
+    try {
+      const jsonValue = await AsyncStorage.getItem('history');
+      return jsonValue != null ? JSON.parse(jsonValue) : null;
+    } catch (e) {
+      // error reading value
     }
   };
 
@@ -135,7 +260,8 @@ export default function Basic({navigation}) {
                   <Text
                     numberOfLines={1}
                     style={styles.buttonText}
-                    adjustsFontSizeToFit={true}>
+                    adjustsFontSizeToFit={true}
+                    allowFontScaling={true}>
                     {item.toUpperCase()}
                   </Text>
                 )}
@@ -149,19 +275,36 @@ export default function Basic({navigation}) {
 
   //Calculate operation
   useEffect(() => {
+    let mounted = true;
     if (operation.length > 0) {
+      //Resolve advanced
+      let operationBasic = MathResolver.resolveAdvanced(operation);
       var resultOp = new MathSolver()
-        .infixToPostfix(operation.replace(/x/g, '*'))
+        .infixToPostfix(operationBasic.replace(/x/g, '*'))
         .split(' ');
       // Calculate the RPN operation
       var stack = MathResolver.resolveRPN(resultOp);
-      if (!isNaN(stack[0]) && stack.length <= 1) {
-        setResult(stack[0]);
-      } else {
-        setResult('Error matemático');
+      if (mounted) {
+        if (!isNaN(stack[0]) && stack.length <= 1) {
+          if (
+            stack[0] % 1 !== 0 &&
+            stack[0].toString().substr('.').length > 8
+          ) {
+            setResult(Number(stack[0]).toFixed(8));
+          } else {
+            setResult(stack[0]);
+          }
+          // if (isVoiceOperation) {
+          //   setCursorPos(stack[0].length);
+          //   setIsVoiceOperation(false);
+          // }
+        } else {
+          setResult('Error matemático');
+        }
       }
     }
-  }, [operation, MathResolver]);
+    return () => (mounted = false);
+  }, [operation, MathResolver, navigation]);
 
   return (
     <View style={styles.container}>
@@ -182,7 +325,12 @@ export default function Basic({navigation}) {
         numberOfLines={1}>
         {result}
       </Text>
-      {layoutCalculator}
+      <View style={styles.layoutCalculator}>{layoutCalculator}</View>
+      {isRecording ? (
+        <View style={styles.recordingContainer}>
+          <Text style={styles.textRecording}>Grabando...</Text>
+        </View>
+      ) : null}
     </View>
   );
 }

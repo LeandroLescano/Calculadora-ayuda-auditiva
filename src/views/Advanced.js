@@ -15,6 +15,8 @@ export default function Basic({navigation}) {
   const [cursorPos, setCursorPos] = useState(1);
   const [showResult, setShowResult] = useState(false);
   const [firstZero, setFirstZero] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
+
   const operationInput = useRef(),
     resultText = useRef();
   const symbols = [
@@ -37,6 +39,11 @@ export default function Basic({navigation}) {
     },
     calculatorBasic: {
       flexDirection: 'row',
+      flex: 1,
+    },
+    layoutCalculator: {
+      flex: 6,
+      flexDirection: 'column',
     },
     inputText: {
       flex: 1,
@@ -62,7 +69,7 @@ export default function Basic({navigation}) {
       backgroundColor: '#1a1a1a',
       alignItems: 'center',
       justifyContent: 'center',
-      minHeight: 50,
+      height: '95%',
     },
     button: {
       marginHorizontal: 2,
@@ -70,18 +77,34 @@ export default function Basic({navigation}) {
       backgroundColor: '#1a1a1a',
       alignItems: 'center',
       justifyContent: 'center',
-      minHeight: 67,
+      height: '95%',
     },
     buttonTextSm: {
       fontSize: 35,
       color: 'white',
     },
     buttonText: {
-      fontSize: 50,
+      fontSize: 70,
       color: 'white',
     },
     iconButton: {
       paddingVertical: 3,
+    },
+    recordingContainer: {
+      position: 'absolute',
+      height: '100%',
+      width: '100%',
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: 'rgba(0,0,0,0.5)',
+    },
+    textRecording: {
+      fontSize: 50,
+      paddingHorizontal: 10,
+      borderColor: 'black',
+      borderWidth: 2,
+      borderRadius: 25,
+      backgroundColor: 'white',
     },
   });
 
@@ -143,7 +166,8 @@ export default function Basic({navigation}) {
                   <Text
                     numberOfLines={1}
                     style={index <= 1 ? styles.buttonTextSm : styles.buttonText}
-                    adjustsFontSizeToFit={true}>
+                    adjustsFontSizeToFit={true}
+                    allowFontScaling={true}>
                     {item}
                   </Text>
                 )}
@@ -190,7 +214,12 @@ export default function Basic({navigation}) {
       <Text style={styles.resultText} ref={resultText}>
         {result}
       </Text>
-      {layoutCalculator}
+      <View style={styles.layoutCalculator}>{layoutCalculator}</View>
+      {isRecording ? (
+        <View style={styles.recordingContainer}>
+          <Text style={styles.textRecording}>Grabando...</Text>
+        </View>
+      ) : null}
     </View>
   );
 }
