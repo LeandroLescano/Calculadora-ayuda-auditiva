@@ -8,6 +8,7 @@ import {
 } from 'react-native';
 import {useFocusEffect} from '@react-navigation/native';
 import MathSolver from '../functions/MathSolver';
+import ManagerDB from '../functions/ManagerDB';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import Voice from '@react-native-voice/voice';
 import Recorder from '../functions/Recorder';
@@ -24,6 +25,15 @@ export default function Basic({route, navigation}) {
   const [history, setHistory] = useState({});
   const MathResolver = useMemo(() => new MathSolver(), []);
   const RecorderF = useMemo(() => new Recorder(), []);
+  const DB = useMemo(() => new ManagerDB(), []);
+  const [config, setConfig] = useState({
+    fontSize: 16,
+    fontFamily: 'Helvetica',
+    textColor: 'white',
+    buttonColor: 'black',
+    vibration: 'Siempre',
+    sound: 'Siempre',
+  });
 
   const operationInput = useRef(),
     resultText = useRef();
@@ -68,14 +78,15 @@ export default function Basic({route, navigation}) {
     button: {
       marginHorizontal: 2,
       marginVertical: 2,
-      backgroundColor: '#1a1a1a',
+      backgroundColor: config.buttonColor ?? '#1a1a1a',
       alignItems: 'center',
       justifyContent: 'center',
       height: '95%',
     },
     buttonText: {
-      fontSize: 70,
-      color: 'white',
+      fontSize: config.fontSize ?? 70,
+      fontFamily: config.fontFamily,
+      color: config.textColor ?? 'white',
     },
     iconButton: {
       paddingVertical: 3,
@@ -107,18 +118,23 @@ export default function Basic({route, navigation}) {
       if (histOperation !== undefined) {
         setOperation(histOperation.params.operationHist);
       }
-    }, [histOperation]),
+      DB.getConfig().then(configDB => {
+        if (configDB !== null) {
+          setConfig(configDB);
+        }
+      });
+    }, [histOperation, DB]),
   );
 
   useEffect(() => {
-    getHistory().then(data => {
+    DB.getHistory().then(data => {
       setHistory(data);
     });
     operationInput.current.focus();
     Voice.onSpeechStart = RecorderF.onSpeechStart;
     Voice.onSpeechRecognized = RecorderF.onSpeechRecognized;
     Voice.onSpeechEnd = RecorderF.onSpeechEnd;
-    Voice.onSpeechError = RecorderF.onSpeechError;
+    Voice.onSpeechError = onSpeechError;
     Voice.onSpeechResults = onSpeechResults;
     Voice.onSpeechPartialResults = RecorderF.onSpeechPartialResults;
     Voice.onSpeechVolumeChanged = RecorderF.onSpeechVolumeChanged;
@@ -150,6 +166,11 @@ export default function Basic({route, navigation}) {
       setOperation(operationTest);
     }
     return () => (mounted = false);
+  };
+
+  const onSpeechError = e => {
+    console.error(e);
+    setIsRecording(false);
   };
 
   const handleOperation = e => {
@@ -213,15 +234,6 @@ export default function Basic({route, navigation}) {
     }
   };
 
-  const getHistory = async () => {
-    try {
-      const jsonValue = await AsyncStorage.getItem('history');
-      return jsonValue != null ? JSON.parse(jsonValue) : null;
-    } catch (e) {
-      // error reading value
-    }
-  };
-
   var layoutCalculator = [];
 
   for (let index = 0; index < 6; index++) {
@@ -238,22 +250,22 @@ export default function Basic({route, navigation}) {
                 {item === 'lft' ? (
                   <Icon
                     name="arrow-back"
-                    color="white"
-                    size={60}
+                    color={config.textColor ?? 'white'}
+                    size={config.fontSize + 10}
                     style={styles.iconButton}
                   />
                 ) : item === 'rgt' ? (
                   <Icon
                     name="arrow-forward"
-                    color="white"
-                    size={60}
+                    color={config.textColor ?? 'white'}
+                    size={config.fontSize + 10}
                     style={styles.iconButton}
                   />
                 ) : item === 'M' ? (
                   <Icon
                     name="mic"
-                    color="white"
-                    size={60}
+                    color={config.textColor ?? 'white'}
+                    size={config.fontSize + 10}
                     style={styles.iconButton}
                   />
                 ) : (

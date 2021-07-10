@@ -20,12 +20,12 @@ export default function Recorder(Voice) {
     // });
   };
 
-  this.onSpeechError = e => {
-    console.log('onSpeechError: ', e);
-    // this.setState({
-    //   error: JSON.stringify(e.error),
-    // });
-  };
+  // this.onSpeechError = e => {
+  //   console.log('onSpeechError: ', e);
+  //   // this.setState({
+  //   //   error: JSON.stringify(e.error),
+  //   // });
+  // };
 
   //   this.onSpeechResults = e => {
   //     console.log('onSpeechResults: ', e);
