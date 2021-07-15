@@ -334,7 +334,10 @@ export default function MathSolver() {
       }
       return true;
     });
-    return operacion.replace(/ /g, '');
+    if (operacion !== undefined) {
+      return operacion.replace(/ /g, '');
+    }
+    return false;
   };
 
   const soloLetras = text => {

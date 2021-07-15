@@ -43,7 +43,7 @@ export default function Recorder(Voice) {
   };
 
   this.onSpeechVolumeChanged = e => {
-    console.log('onSpeechVolumeChanged: ', e);
+    // console.log('onSpeechVolumeChanged: ', e);
     // this.setState({
     //   pitch: e.value,
     // });

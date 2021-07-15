@@ -14,7 +14,7 @@ import ManagerDB from '../functions/ManagerDB';
 
 function Configuration() {
   const [config, setConfig] = useState({
-    fontSize: 16,
+    fontSize: 48,
     fontFamily: 'normal',
     textColor: 'white',
     buttonColor: 'black',
@@ -51,7 +51,7 @@ function Configuration() {
       padding: 10,
     },
     buttonText: {
-      fontSize: config.fontSize,
+      fontSize: 32,
       color: config.textColor,
       fontFamily: config.fontFamily,
     },

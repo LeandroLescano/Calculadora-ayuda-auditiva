@@ -5,18 +5,24 @@ import {
   View,
   TouchableHighlight,
   StyleSheet,
+  ToastAndroid,
 } from 'react-native';
+import Voice from '@react-native-voice/voice';
 import MathSolver from '../functions/MathSolver';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import Recorder from '../functions/Recorder';
+import ManagerDB from '../functions/ManagerDB';
 
 export default function Basic({navigation}) {
-  const [result, setResult] = useState(0);
+  const [result, setResult] = useState('0');
   const [operation, setOperation] = useState('0');
   const [cursorPos, setCursorPos] = useState(1);
   const [showResult, setShowResult] = useState(false);
   const [firstZero, setFirstZero] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
-
+  const [history, setHistory] = useState({});
+  const DB = useMemo(() => new ManagerDB(), []);
+  const RecorderF = useMemo(() => new Recorder(), []);
   const operationInput = useRef(),
     resultText = useRef();
   const symbols = [
@@ -28,9 +34,7 @@ export default function Basic({navigation}) {
     ['√', '1', '2', '3', '+'],
     ['π', 'M', '0', '.', '='],
   ];
-
   const MathResolver = useMemo(() => new MathSolver(), []);
-
   const noRepeatSymbols = ['.', '/', '-', '+', 'x'];
 
   const styles = StyleSheet.create({
@@ -119,9 +123,19 @@ export default function Basic({navigation}) {
     ) {
       return;
     }
-    // SHOW RESULT
-    if (e === '=') {
+
+    if (e === 'M') {
+      if (isRecording) {
+        _stopRecognizing();
+        setIsRecording(false);
+      } else {
+        _startRecognizing();
+        setIsRecording(true);
+      }
+      // SHOW RESULT
+    } else if (e === '=') {
       setShowResult(true);
+      DB.saveOperation(result, history, operation);
       setFirstZero(false);
     } else {
       setShowResult(false);
@@ -137,6 +151,101 @@ export default function Basic({navigation}) {
       setFirstZero(resultOp[2]);
     }
   };
+
+  useEffect(() => {
+    DB.getHistory().then(data => {
+      setHistory(data);
+    });
+    operationInput.current.focus();
+    Voice.onSpeechStart = RecorderF.onSpeechStart;
+    Voice.onSpeechRecognized = RecorderF.onSpeechRecognized;
+    Voice.onSpeechEnd = RecorderF.onSpeechEnd;
+    Voice.onSpeechError = onSpeechError;
+    Voice.onSpeechResults = onSpeechResults;
+    Voice.onSpeechPartialResults = RecorderF.onSpeechPartialResults;
+    Voice.onSpeechVolumeChanged = RecorderF.onSpeechVolumeChanged;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const _startRecognizing = async () => {
+    try {
+      await Voice.start('es-ES');
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const _stopRecognizing = async () => {
+    try {
+      await Voice.stop();
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const onSpeechResults = e => {
+    let mounted = true;
+    setIsRecording(false);
+    if (mounted) {
+      console.log('onSpeechResults: ', e);
+      let operationTest = MathResolver.simplifyOperation(e.value);
+      if (operationTest !== false) {
+        setOperation(operationTest);
+      } else {
+        ToastAndroid.showWithGravityAndOffset(
+          'INGRESO INCORRECTO',
+          ToastAndroid.SHORT,
+          ToastAndroid.TOP,
+          0,
+          150,
+        );
+      }
+    }
+    return () => (mounted = false);
+  };
+
+  const onSpeechError = e => {
+    console.error(e);
+    let txt = 'ERROR';
+    switch (e.error.code) {
+      case '6': {
+        txt = 'SIN INGRESO DE VOZ';
+        break;
+      }
+      case '7': {
+        txt = 'INGRESO INENTENDIBLE';
+        break;
+      }
+    }
+    setIsRecording(false);
+    ToastAndroid.showWithGravityAndOffset(
+      txt,
+      ToastAndroid.SHORT,
+      ToastAndroid.TOP,
+      0,
+      150,
+    );
+  };
+
+  //Calculate operation
+  useEffect(() => {
+    if (operation.length > 0) {
+      //Resolve advanced
+      let operationBasic = MathResolver.resolveAdvanced(operation);
+      //Operation to RPN
+      var resultOp = MathResolver.infixToPostfix(
+        operationBasic.replace(/x/g, '*'),
+      ).split(' ');
+
+      // Calculate the RPN operation
+      var stack = MathResolver.resolveRPN(resultOp);
+      if (!isNaN(stack[0]) && stack.length === 1) {
+        setResult(stack[0]);
+      } else {
+        setResult('Error matemático');
+      }
+    }
+  }, [operation, MathResolver]);
 
   var layoutCalculator = [];
 
@@ -178,26 +287,6 @@ export default function Basic({navigation}) {
       </View>,
     );
   }
-
-  //Calculate operation
-  useEffect(() => {
-    if (operation.length > 0) {
-      //Resolve advanced
-      let operationBasic = MathResolver.resolveAdvanced(operation);
-      //Operation to RPN
-      var resultOp = MathResolver.infixToPostfix(
-        operationBasic.replace(/x/g, '*'),
-      ).split(' ');
-
-      // Calculate the RPN operation
-      var stack = MathResolver.resolveRPN(resultOp);
-      if (!isNaN(stack[0]) && stack.length === 1) {
-        setResult(stack[0]);
-      } else {
-        setResult('Error matemático');
-      }
-    }
-  }, [operation, MathResolver]);
 
   return (
     <View style={styles.container}>
