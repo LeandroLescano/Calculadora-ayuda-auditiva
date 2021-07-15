@@ -1,4 +1,4 @@
-import React, {useState, useEffect, useRef, useMemo, useCallback} from 'react';
+import React, {useState, useEffect, useRef, useMemo} from 'react';
 import {
   Text,
   TextInput,
@@ -15,8 +15,9 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 import Voice from '@react-native-voice/voice';
 import Recorder from '../functions/Recorder';
 
-export default function Basic({route, navigation}) {
-  const histOperation = route.params;
+export default function Basic(props) {
+  const histOperation =
+    props.route !== undefined ? props.route.params : undefined;
   const [result, setResult] = useState('0');
   const [operation, setOperation] = useState('0');
   const [cursorPos, setCursorPos] = useState(1);
@@ -25,6 +26,7 @@ export default function Basic({route, navigation}) {
   const [isRecording, setIsRecording] = useState(false);
   const [history, setHistory] = useState({});
   const [isVoiceOperation, setIsVoiceOperation] = useState(false);
+  const [type, setType] = useState(props.type);
   const MathResolver = useMemo(() => new MathSolver(), []);
   const RecorderF = useMemo(() => new Recorder(), []);
   const DB = useMemo(() => new ManagerDB(), []);
@@ -46,6 +48,15 @@ export default function Basic({route, navigation}) {
     ['4', '5', '6', '-'],
     ['1', '2', '3', '+'],
     ['M', '0', '.', '='],
+  ];
+  const symbolsAdv = [
+    ['Tan-1', 'Sin-1', 'Cos-1', 'lft', 'rgt'],
+    ['Tan', 'Sin', 'Cos', '(', ')'],
+    ['Ln', 'DEL', '%', '/', 'AC'],
+    ['Lg', '7', '8', '9', 'x'],
+    ['X^', '4', '5', '6', '-'],
+    ['√', '1', '2', '3', '+'],
+    ['π', 'M', '0', '.', '='],
   ];
   const noRepeatSymbols = ['.', '/', '-', '+', 'x'];
 
@@ -77,6 +88,14 @@ export default function Basic({route, navigation}) {
     buttonContainer: {
       flex: 1,
     },
+    buttonSm: {
+      marginHorizontal: 2,
+      marginVertical: 2,
+      backgroundColor: '#1a1a1a',
+      alignItems: 'center',
+      justifyContent: 'center',
+      height: '95%',
+    },
     button: {
       marginHorizontal: 2,
       marginVertical: 2,
@@ -84,6 +103,10 @@ export default function Basic({route, navigation}) {
       alignItems: 'center',
       justifyContent: 'center',
       height: '95%',
+    },
+    buttonTextSm: {
+      fontSize: 35,
+      color: 'white',
     },
     buttonText: {
       fontSize: config.fontSize ?? 70,
@@ -117,6 +140,8 @@ export default function Basic({route, navigation}) {
 
   useFocusEffect(
     React.useCallback(() => {
+      Voice.onSpeechResults = onSpeechResults;
+      Voice.onSpeechError = onSpeechError;
       if (histOperation !== undefined) {
         setOperation(histOperation.params.operationHist);
       }
@@ -125,7 +150,7 @@ export default function Basic({route, navigation}) {
           setConfig(configDB);
         }
       });
-    }, [histOperation, DB]),
+    }, [histOperation, DB, onSpeechResults, onSpeechError]),
   );
 
   useEffect(() => {
@@ -133,6 +158,7 @@ export default function Basic({route, navigation}) {
       setHistory(data);
     });
     operationInput.current.focus();
+    setType(props.type);
     Voice.onSpeechStart = RecorderF.onSpeechStart;
     Voice.onSpeechRecognized = RecorderF.onSpeechRecognized;
     Voice.onSpeechEnd = RecorderF.onSpeechEnd;
@@ -141,7 +167,7 @@ export default function Basic({route, navigation}) {
     Voice.onSpeechPartialResults = RecorderF.onSpeechPartialResults;
     Voice.onSpeechVolumeChanged = RecorderF.onSpeechVolumeChanged;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [props]);
 
   const _startRecognizing = async () => {
     try {
@@ -151,38 +177,53 @@ export default function Basic({route, navigation}) {
     }
   };
 
-  const _stopRecognizing = async () => {
+  // const _stopRecognizing = async () => {
+  //   try {
+  //     await Voice.stop();
+  //   } catch (e) {
+  //     console.error(e);
+  //   }
+  // };
+
+  const _destroyRecognizer = async () => {
     try {
-      await Voice.stop();
+      await Voice.destroy();
     } catch (e) {
       console.error(e);
     }
   };
 
-  const onSpeechResults = e => {
-    let mounted = true;
-    if (mounted) {
-      setIsRecording(false);
-      console.log('onSpeechResults: ', e);
-      let operationTest = MathResolver.simplifyOperation(e.value);
-      if (operationTest !== false) {
-        setOperation(operationTest);
-      } else {
-        setIsVoiceOperation(false);
-        ToastAndroid.showWithGravityAndOffset(
-          'INGRESO INCORRECTO',
-          ToastAndroid.SHORT,
-          ToastAndroid.TOP,
-          0,
-          150,
-        );
+  const onSpeechResults = React.useCallback(
+    e => {
+      _destroyRecognizer();
+      let mounted = true;
+      if (mounted) {
+        setIsRecording(false);
+        console.log('onSpeechResults: ', e);
+        let operationTest = MathResolver.simplifyOperation(e.value);
+        if (operationTest !== false) {
+          setOperation(operationTest);
+        } else {
+          setIsVoiceOperation(false);
+          VoiceH.speak('Ingreso incorrecto');
+          ToastAndroid.showWithGravityAndOffset(
+            'INGRESO INCORRECTO',
+            ToastAndroid.SHORT,
+            ToastAndroid.TOP,
+            0,
+            150,
+          );
+        }
       }
-    }
-    return () => (mounted = false);
-  };
+      return () => (mounted = false);
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [MathResolver],
+  );
 
-  const onSpeechError = e => {
-    console.error(e);
+  const onSpeechError = React.useCallback(e => {
+    _destroyRecognizer();
+    let mounted = true;
     let txt = 'ERROR';
     switch (e.error.code) {
       case '6': {
@@ -194,7 +235,9 @@ export default function Basic({route, navigation}) {
         break;
       }
     }
-    setIsRecording(false);
+    if (mounted) {
+      setIsRecording(false);
+    }
     ToastAndroid.showWithGravityAndOffset(
       txt,
       ToastAndroid.SHORT,
@@ -202,7 +245,8 @@ export default function Basic({route, navigation}) {
       0,
       150,
     );
-  };
+    return () => (mounted = false);
+  }, []);
 
   const handleOperation = e => {
     if (
@@ -212,11 +256,7 @@ export default function Basic({route, navigation}) {
       return;
     }
     if (e === 'M') {
-      if (isRecording) {
-        _stopRecognizing();
-        setIsRecording(false);
-        setIsVoiceOperation(false);
-      } else {
+      if (!isRecording) {
         _startRecognizing();
         setIsRecording(true);
         setIsVoiceOperation(true);
@@ -246,9 +286,13 @@ export default function Basic({route, navigation}) {
   //Calculate operation
   useEffect(() => {
     function checkTTS(r) {
-      if (isVoiceOperation) {
+      if (isVoiceOperation && operation !== '0') {
         setCursorPos(operation.length);
-        VoiceH.speak('El resultado de ' + operation + ' es ' + r);
+        if (!isNaN(r)) {
+          VoiceH.speak('El resultado de ' + operation + ' es ' + r);
+        } else {
+          VoiceH.speak('El resultado de ' + operation + ' da Error matemático');
+        }
         setIsVoiceOperation(false);
       }
     }
@@ -262,8 +306,8 @@ export default function Basic({route, navigation}) {
       // Calculate the RPN operation
       var stack = MathResolver.resolveRPN(resultOp);
       if (mounted) {
+        let resultSpeak = stack[0];
         if (!isNaN(stack[0]) && stack.length <= 1) {
-          let resultSpeak = stack[0];
           if (
             stack[0] % 1 !== 0 &&
             stack[0].toString().substr('.').length > 8
@@ -273,15 +317,15 @@ export default function Basic({route, navigation}) {
           } else {
             setResult(stack[0]);
           }
-          checkTTS(resultSpeak);
         } else {
           setResult('Error matemático');
         }
+        checkTTS(resultSpeak);
       }
     }
     return () => (mounted = false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [operation, MathResolver, navigation, VoiceH]);
+  }, [operation]);
 
   var layoutCalculator = [];
 
@@ -334,8 +378,55 @@ export default function Basic({route, navigation}) {
     );
   }
 
+  var layoutCalculatorAdv = [];
+
+  for (let index = 0; index < 7; index++) {
+    layoutCalculatorAdv.push(
+      <View style={styles.calculatorBasic} key={index}>
+        {symbolsAdv[index].map((item, i) => {
+          return (
+            <TouchableHighlight
+              key={i}
+              underlayColor="white"
+              style={styles.buttonContainer}
+              onPress={() => handleOperation(item)}>
+              <View style={index <= 1 ? styles.buttonSm : styles.button}>
+                {item === 'lft' ? (
+                  <Icon name="arrow-back" color="white" size={48} />
+                ) : item === 'rgt' ? (
+                  <Icon name="arrow-forward" color="white" size={48} />
+                ) : item === 'M' ? (
+                  <Icon
+                    name="mic"
+                    color="white"
+                    size={60}
+                    style={styles.iconButton}
+                  />
+                ) : (
+                  <Text
+                    numberOfLines={1}
+                    style={index <= 1 ? styles.buttonTextSm : styles.buttonText}
+                    adjustsFontSizeToFit={true}
+                    allowFontScaling={true}>
+                    {item}
+                  </Text>
+                )}
+              </View>
+            </TouchableHighlight>
+          );
+        })}
+      </View>,
+    );
+  }
+
   return (
     <View style={styles.container}>
+      {/* <Recorder
+        record={isRecording}
+        setIsRecording={val => setIsRecording(val)}
+        setOperation={val => setOperation(val)}
+        setIsVoiceOperation={val => setIsVoiceOperation(val)}
+      /> */}
       <TextInput
         scrollEnabled={false}
         style={styles.inputText}
@@ -355,12 +446,16 @@ export default function Basic({route, navigation}) {
         numberOfLines={1}>
         {result}
       </Text>
-      <View style={styles.layoutCalculator}>{layoutCalculator}</View>
-      {isRecording ? (
+      {type === 'basic' ? (
+        <View style={styles.layoutCalculator}>{layoutCalculator}</View>
+      ) : (
+        <View style={styles.layoutCalculator}>{layoutCalculatorAdv}</View>
+      )}
+      {isRecording && (
         <View style={styles.recordingContainer}>
           <Text style={styles.textRecording}>Grabando...</Text>
         </View>
-      ) : null}
+      )}
     </View>
   );
 }

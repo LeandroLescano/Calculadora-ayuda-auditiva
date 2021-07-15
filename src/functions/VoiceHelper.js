@@ -3,10 +3,8 @@ import Tts from 'react-native-tts';
 
 export default function VoiceHelper() {
   useEffect(() => {
-    console.log('VoiceH init');
     Tts.getInitStatus().then(() => {
       Tts.setDefaultLanguage('es-US');
-      Tts.voices().then(voices => console.log(voices));
     });
   }, []);
 
@@ -18,6 +16,7 @@ export default function VoiceHelper() {
 
   this.checkText = text => {
     let textChecked = text;
+    console.log(textChecked);
     switch (textChecked) {
       case 'lft': {
         return 'izquierda';

@@ -7,10 +7,10 @@ import {
   StyleSheet,
   ToastAndroid,
 } from 'react-native';
-import Voice from '@react-native-voice/voice';
 import MathSolver from '../functions/MathSolver';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import Recorder from '../functions/Recorder';
+import VoiceHelper from '../functions/VoiceHelper';
 import ManagerDB from '../functions/ManagerDB';
 
 export default function Basic({navigation}) {
@@ -19,13 +19,15 @@ export default function Basic({navigation}) {
   const [cursorPos, setCursorPos] = useState(1);
   const [showResult, setShowResult] = useState(false);
   const [firstZero, setFirstZero] = useState(false);
-  const [isRecording, setIsRecording] = useState(false);
+  const [isRecording, setIsRecordingAdv] = useState(false);
   const [history, setHistory] = useState({});
+  const [isVoiceOperation, setIsVoiceOperation] = useState(false);
   const DB = useMemo(() => new ManagerDB(), []);
-  const RecorderF = useMemo(() => new Recorder(), []);
+  const VoiceH = new VoiceHelper();
+  // const RecorderF = useMemo(() => new Recorder(), []);
   const operationInput = useRef(),
     resultText = useRef();
-  const symbols = [
+  const symbolsAdv = [
     ['Tan-1', 'Sin-1', 'Cos-1', 'lft', 'rgt'],
     ['Tan', 'Sin', 'Cos', '(', ')'],
     ['Ln', 'DEL', '%', '/', 'AC'],
@@ -126,11 +128,13 @@ export default function Basic({navigation}) {
 
     if (e === 'M') {
       if (isRecording) {
-        _stopRecognizing();
-        setIsRecording(false);
+        // _stopRecognizing();
+        setIsRecordingAdv(false);
+        setIsVoiceOperation(false);
       } else {
-        _startRecognizing();
-        setIsRecording(true);
+        // _startRecognizing();
+        setIsRecordingAdv(true);
+        setIsVoiceOperation(true);
       }
       // SHOW RESULT
     } else if (e === '=') {
@@ -157,78 +161,86 @@ export default function Basic({navigation}) {
       setHistory(data);
     });
     operationInput.current.focus();
-    Voice.onSpeechStart = RecorderF.onSpeechStart;
-    Voice.onSpeechRecognized = RecorderF.onSpeechRecognized;
-    Voice.onSpeechEnd = RecorderF.onSpeechEnd;
-    Voice.onSpeechError = onSpeechError;
-    Voice.onSpeechResults = onSpeechResults;
-    Voice.onSpeechPartialResults = RecorderF.onSpeechPartialResults;
-    Voice.onSpeechVolumeChanged = RecorderF.onSpeechVolumeChanged;
+    // Voice.onSpeechStart = RecorderF.onSpeechStart;
+    // Voice.onSpeechRecognized = RecorderF.onSpeechRecognized;
+    // Voice.onSpeechEnd = RecorderF.onSpeechEnd;
+    // Voice.onSpeechError = onSpeechError;
+    // Voice.onSpeechResults = onSpeechResults;
+    // Voice.onSpeechPartialResults = RecorderF.onSpeechPartialResults;
+    // Voice.onSpeechVolumeChanged = RecorderF.onSpeechVolumeChanged;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const _startRecognizing = async () => {
-    try {
-      await Voice.start('es-ES');
-    } catch (e) {
-      console.error(e);
-    }
-  };
+  // const _startRecognizing = async () => {
+  //   try {
+  //     await Voice.start('es-ES');
+  //   } catch (e) {
+  //     console.error(e);
+  //   }
+  // };
 
-  const _stopRecognizing = async () => {
-    try {
-      await Voice.stop();
-    } catch (e) {
-      console.error(e);
-    }
-  };
+  // const _stopRecognizing = async () => {
+  //   try {
+  //     await Voice.stop();
+  //   } catch (e) {
+  //     console.error(e);
+  //   }
+  // };
 
-  const onSpeechResults = e => {
-    let mounted = true;
-    setIsRecording(false);
-    if (mounted) {
-      console.log('onSpeechResults: ', e);
-      let operationTest = MathResolver.simplifyOperation(e.value);
-      if (operationTest !== false) {
-        setOperation(operationTest);
-      } else {
-        ToastAndroid.showWithGravityAndOffset(
-          'INGRESO INCORRECTO',
-          ToastAndroid.SHORT,
-          ToastAndroid.TOP,
-          0,
-          150,
-        );
-      }
-    }
-    return () => (mounted = false);
-  };
+  // const onSpeechResults = e => {
+  //   let mounted = true;
+  //   setIsRecording(false);
+  //   if (mounted) {
+  //     console.log('onSpeechResults: ', e);
+  //     let operationTest = MathResolver.simplifyOperation(e.value);
+  //     if (operationTest !== false) {
+  //       setOperation(operationTest);
+  //     } else {
+  //       ToastAndroid.showWithGravityAndOffset(
+  //         'INGRESO INCORRECTO',
+  //         ToastAndroid.SHORT,
+  //         ToastAndroid.TOP,
+  //         0,
+  //         150,
+  //       );
+  //     }
+  //   }
+  //   return () => (mounted = false);
+  // };
 
-  const onSpeechError = e => {
-    console.error(e);
-    let txt = 'ERROR';
-    switch (e.error.code) {
-      case '6': {
-        txt = 'SIN INGRESO DE VOZ';
-        break;
-      }
-      case '7': {
-        txt = 'INGRESO INENTENDIBLE';
-        break;
-      }
-    }
-    setIsRecording(false);
-    ToastAndroid.showWithGravityAndOffset(
-      txt,
-      ToastAndroid.SHORT,
-      ToastAndroid.TOP,
-      0,
-      150,
-    );
-  };
+  // const onSpeechError = e => {
+  //   console.error(e);
+  //   let txt = 'ERROR';
+  //   switch (e.error.code) {
+  //     case '6': {
+  //       txt = 'SIN INGRESO DE VOZ';
+  //       break;
+  //     }
+  //     case '7': {
+  //       txt = 'INGRESO INENTENDIBLE';
+  //       break;
+  //     }
+  //   }
+  //   setIsRecording(false);
+  //   ToastAndroid.showWithGravityAndOffset(
+  //     txt,
+  //     ToastAndroid.SHORT,
+  //     ToastAndroid.TOP,
+  //     0,
+  //     150,
+  //   );
+  // };
 
   //Calculate operation
   useEffect(() => {
+    function checkTTS(r) {
+      if (isVoiceOperation && operation !== '0') {
+        setCursorPos(operation.length);
+        VoiceH.speak('El resultado de ' + operation + ' es ' + r);
+        setIsVoiceOperation(false);
+      }
+    }
+    let mounted = true;
     if (operation.length > 0) {
       //Resolve advanced
       let operationBasic = MathResolver.resolveAdvanced(operation);
@@ -239,20 +251,33 @@ export default function Basic({navigation}) {
 
       // Calculate the RPN operation
       var stack = MathResolver.resolveRPN(resultOp);
-      if (!isNaN(stack[0]) && stack.length === 1) {
-        setResult(stack[0]);
-      } else {
-        setResult('Error matemático');
+      if (mounted) {
+        if (!isNaN(stack[0]) && stack.length <= 1) {
+          let resultSpeak = stack[0];
+          if (
+            stack[0] % 1 !== 0 &&
+            stack[0].toString().substr('.').length > 8
+          ) {
+            resultSpeak = Number(stack[0]).toFixed(8);
+            setResult(Number(stack[0]).toFixed(8));
+          } else {
+            setResult(stack[0]);
+          }
+          checkTTS(resultSpeak);
+        } else {
+          setResult('Error matemático');
+        }
       }
     }
-  }, [operation, MathResolver]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [operation]);
 
   var layoutCalculator = [];
 
   for (let index = 0; index < 7; index++) {
     layoutCalculator.push(
       <View style={styles.calculatorBasic} key={index}>
-        {symbols[index].map((item, i) => {
+        {symbolsAdv[index].map((item, i) => {
           return (
             <TouchableHighlight
               key={i}
@@ -290,6 +315,13 @@ export default function Basic({navigation}) {
 
   return (
     <View style={styles.container}>
+      <Recorder
+        record={isRecording}
+        setIsRecording={val => setIsRecordingAdv(val)}
+        setOperation={val => setOperation(val)}
+        setIsVoiceOperation={val => setIsVoiceOperation(val)}
+        random={555}
+      />
       <TextInput
         scrollEnabled={false}
         style={styles.inputText}

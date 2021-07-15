@@ -2,7 +2,7 @@ import React from 'react';
 import {NavigationContainer} from '@react-navigation/native';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
 import Basic from './src/views/Basic';
-import Advanced from './src/views/Advanced';
+// import Advanced from './src/views/Advanced';
 import Configuration from './src/views/Configuration';
 import Historial from './src/views/Historial';
 import {Text, StyleSheet} from 'react-native';
@@ -84,10 +84,12 @@ function App() {
               close: config,
             },
           }}
-          name="BÁSICA"
-          component={Basic}
-        />
-        <Tab.Screen name="CIENTÍFICA" component={Advanced} />
+          name="BÁSICA">
+          {navigation => <Basic {...navigation} type="basic" />}
+        </Tab.Screen>
+        <Tab.Screen name="CIENTÍFICA">
+          {navigation => <Basic {...navigation} type="advanced" />}
+        </Tab.Screen>
         <Tab.Screen name="HISTORIAL" component={Historial} />
         <Tab.Screen name="CONFIG." component={Configuration} />
       </Tab.Navigator>
