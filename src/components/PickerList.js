@@ -18,16 +18,27 @@ function PickerList(props) {
           style={props.styles.picker}
           dropdownIconColor={'#1a1a1a'}
           prompt={props.title}>
-          {props.data.map((op, i) => {
-            return (
-              <Picker.Item
-                key={i}
-                style={props.styles.pickerText}
-                label={op.label ?? op.toString()}
-                value={op.value ?? op}
-              />
-            );
-          })}
+          {Object.entries(props.data).length > 4
+            ? props.data.map((op, i) => {
+                return (
+                  <Picker.Item
+                    key={i}
+                    style={props.styles.pickerText}
+                    label={op.label ?? op.toString()}
+                    value={op.value ?? op}
+                  />
+                );
+              })
+            : Object.entries(props.data).map((op, i) => {
+                return (
+                  <Picker.Item
+                    key={i}
+                    style={props.styles.pickerText}
+                    label={op[1]}
+                    value={op[0]}
+                  />
+                );
+              })}
         </Picker>
       </View>
     </>

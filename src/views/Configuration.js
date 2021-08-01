@@ -39,7 +39,13 @@ function Configuration() {
       {label: 'Blanco', value: 'white'},
       {label: 'Negro', value: '#1a1a1a'},
     ],
-    stateList: ['Siempre', 'Solo resultados', 'Solo errores', 'Nunca'],
+    // stateList: ['Siempre', 'Solo resultados', 'Solo errores', 'Nunca'],
+    stateList: {
+      ALWAYS: 'Siempre',
+      ONLY_RESULTS: 'Solo resultados',
+      ONLY_ERRORS: 'Solo errores',
+      NEVER: 'Nunca',
+    },
   };
 
   const styles = StyleSheet.create({

@@ -64,37 +64,41 @@ export default function MathSolver() {
     infix = infix.replace(/\s+/g, '');
     // eslint-disable-next-line no-useless-escape
     infix = infix.split(/([\+\-\*\/\^\(\)\√])/);
-    for (var i = 0; i < infix.length; i++) {
-      var token = infix[i];
-      if (!isNaN(token) || token === 'π') {
-        outputQueue += token + ' ';
-      } else if (
-        '^*/+-lglntansincosarctanarcsinarccos√'.indexOf(token) !== -1
-      ) {
-        var o1 = token;
-        var o2 = operatorStack[operatorStack.length - 1];
-        while (
-          '^*/+-lglntansincosarctanarcsinarccos√'.indexOf(o2) !== -1 &&
-          ((operators[o1].associativity === 'Left' &&
-            operators[o1].precedence <= operators[o2].precedence) ||
-            (operators[o1].associativity === 'Right' &&
-              operators[o1].precedence < operators[o2].precedence))
+    try {
+      for (var i = 0; i < infix.length; i++) {
+        var token = infix[i];
+        if (!isNaN(token) || token === 'π') {
+          outputQueue += token + ' ';
+        } else if (
+          '^*/+-lglntansincosarctanarcsinarccos√'.indexOf(token) !== -1
         ) {
-          outputQueue += operatorStack.pop() + ' ';
-          o2 = operatorStack[operatorStack.length - 1];
+          var o1 = token;
+          var o2 = operatorStack[operatorStack.length - 1];
+          while (
+            '^*/+-lglntansincosarctanarcsinarccos√'.indexOf(o2) !== -1 &&
+            ((operators[o1].associativity === 'Left' &&
+              operators[o1].precedence <= operators[o2].precedence) ||
+              (operators[o1].associativity === 'Right' &&
+                operators[o1].precedence < operators[o2].precedence))
+          ) {
+            outputQueue += operatorStack.pop() + ' ';
+            o2 = operatorStack[operatorStack.length - 1];
+          }
+          operatorStack.push(o1);
+        } else if (token === '(') {
+          operatorStack.push(token);
+        } else if (token === ')') {
+          while (
+            operatorStack[operatorStack.length - 1] !== '(' &&
+            operatorStack.length > 0
+          ) {
+            outputQueue += operatorStack.pop() + ' ';
+          }
+          operatorStack.pop();
         }
-        operatorStack.push(o1);
-      } else if (token === '(') {
-        operatorStack.push(token);
-      } else if (token === ')') {
-        while (
-          operatorStack[operatorStack.length - 1] !== '(' &&
-          operatorStack.length > 0
-        ) {
-          outputQueue += operatorStack.pop() + ' ';
-        }
-        operatorStack.pop();
       }
+    } catch (e) {
+      console.error(e);
     }
     while (operatorStack.length > 0) {
       outputQueue += operatorStack.pop() + ' ';

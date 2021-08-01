@@ -18,6 +18,7 @@ import Recorder from '../functions/Recorder';
 export default function Basic(props) {
   const histOperation =
     props.route !== undefined ? props.route.params : undefined;
+  //States
   const [result, setResult] = useState('0');
   const [operation, setOperation] = useState('0');
   const [cursorPos, setCursorPos] = useState(1);
@@ -27,17 +28,24 @@ export default function Basic(props) {
   const [history, setHistory] = useState({});
   const [isVoiceOperation, setIsVoiceOperation] = useState(false);
   const [type, setType] = useState(props.type);
+  //File Functions
   const MathResolver = useMemo(() => new MathSolver(), []);
   const RecorderF = useMemo(() => new Recorder(), []);
   const DB = useMemo(() => new ManagerDB(), []);
   const VoiceH = new VoiceHelper();
+  const statesConfig = {
+    ALWAYS: 'Siempre',
+    ONLY_RESULTS: 'Solo resultados',
+    ONLY_ERRORS: 'Solo errores',
+    NEVER: 'Nunca',
+  };
   const [config, setConfig] = useState({
-    fontSize: 16,
+    fontSize: 48,
     fontFamily: 'Helvetica',
     textColor: 'white',
-    buttonColor: 'black',
-    vibration: 'Siempre',
-    sound: 'Siempre',
+    buttonColor: '#1a1a1a',
+    vibration: statesConfig.ALWAYS,
+    sound: statesConfig.ALWAYS,
   });
   const operationInput = useRef(),
     resultText = useRef();
@@ -205,7 +213,9 @@ export default function Basic(props) {
           setOperation(operationTest);
         } else {
           setIsVoiceOperation(false);
-          VoiceH.speak('Ingreso incorrecto');
+          if (['ALWAYS', 'ONLY_ERRORS'].indexOf(config.sound) >= 0) {
+            VoiceH.speak('Ingreso incorrecto');
+          }
           ToastAndroid.showWithGravityAndOffset(
             'INGRESO INCORRECTO',
             ToastAndroid.SHORT,
@@ -265,11 +275,15 @@ export default function Basic(props) {
     } else if (e === '=') {
       setShowResult(true);
       DB.saveOperation(result, history, operation);
-      VoiceH.speak('Resultado: ' + result); //tts deleted
+      if (['ALWAYS', 'ONLY_RESULTS'].indexOf(config.sound) >= 0) {
+        VoiceH.speak('Resultado: ' + result);
+      }
       setFirstZero(false);
     } else {
       setShowResult(false);
-      VoiceH.speak(e); //tts deleted
+      if (['ALWAYS'].indexOf(config.sound) >= 0) {
+        VoiceH.speak(e);
+      }
       let resultOp = MathResolver.addToOperation(
         e,
         operation,
@@ -288,10 +302,16 @@ export default function Basic(props) {
     function checkTTS(r) {
       if (isVoiceOperation && operation !== '0') {
         setCursorPos(operation.length);
-        if (!isNaN(r)) {
+        if (
+          ['ALWAYS', 'ONLY_RESULTS'].indexOf(config.sound) >= 0 &&
+          !isNaN(r)
+        ) {
           VoiceH.speak('El resultado de ' + operation + ' es ' + r);
-        } else {
-          VoiceH.speak('El resultado de ' + operation + ' da Error matemático');
+        } else if (
+          ['ALWAYS', 'ONLY_ERRORS'].indexOf(config.sound) >= 0 &&
+          isNaN(r)
+        ) {
+          VoiceH.speak('El resultado de ' + operation + ' da error matemático');
         }
         setIsVoiceOperation(false);
       }

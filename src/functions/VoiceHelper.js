@@ -16,7 +16,6 @@ export default function VoiceHelper() {
 
   this.checkText = text => {
     let textChecked = text;
-    console.log(textChecked);
     switch (textChecked) {
       case 'lft': {
         return 'izquierda';
@@ -49,35 +48,44 @@ export default function VoiceHelper() {
     if (textChecked.includes('/')) {
       textChecked = textChecked.replace('/', ' dividido ');
     }
-    if (textChecked.includes('-')) {
-      textChecked = textChecked.replace('-', ' menos ');
-    }
     if (textChecked.includes('+')) {
       textChecked = textChecked.replace('+', ' más ');
     }
-    if (textChecked.includes('^')) {
-      textChecked = textChecked.replace('^', ' elevado a la ');
+    if (textChecked.includes('X^')) {
+      textChecked = textChecked.replace('X^', ' elevado a la ');
     }
-    if (textChecked.includes('ln(')) {
-      textChecked = textChecked.replace('ln', ' logaritmo natural de ');
+    if (textChecked.match(/(Ln|ln\()/g)) {
+      textChecked = textChecked.replace(/(Ln|ln\()/g, ' logaritmo natural de ');
     }
-    if (textChecked.includes('lg(')) {
-      textChecked = textChecked.replace('lg', ' logaritmo decimal de ');
+    if (textChecked.match(/(Lg|lg\()/g)) {
+      textChecked = textChecked.replace(/(Lg|lg\()/g, ' logaritmo decimal de ');
     }
-    if (textChecked.includes('arccos(')) {
-      textChecked = textChecked.replace('arccos', ' coseno inverso de ');
-    } else if (textChecked.includes('cos(')) {
-      textChecked = textChecked.replace('cos', ' coseno de ');
+    if (textChecked.match(/(Cos-1|arccos\()/g)) {
+      textChecked = textChecked.replace(
+        /(Cos-1|arccos\()/g,
+        ' coseno inverso de ',
+      );
+    } else if (textChecked.match(/(Cos|cos\()/g)) {
+      textChecked = textChecked.replace(/(Cos|cos\()/g, ' coseno de ');
     }
-    if (textChecked.includes('arctan(')) {
-      textChecked = textChecked.replace('arctan', ' tangente inversa de ');
-    } else if (textChecked.includes('tan(')) {
-      textChecked = textChecked.replace('tan', ' tangente de ');
+    if (textChecked.match(/(Tan-1|arctan\()/g)) {
+      textChecked = textChecked.replace(
+        /(Tan-1|arctan\()/g,
+        ' tangente inversa de ',
+      );
+    } else if (textChecked.match(/(Tan|tan\()/g)) {
+      textChecked = textChecked.replace(/(Tan|tan\()/g, ' tangente de ');
     }
-    if (textChecked.includes('arcsin(')) {
-      textChecked = textChecked.replace('arcsin', ' seno inverso de ');
-    } else if (textChecked.includes('sin(')) {
-      textChecked = textChecked.replace('sin', ' seno de ');
+    if (textChecked.match(/(Sin-1|arcsin\()/g)) {
+      textChecked = textChecked.replace(
+        /(Sin-1|arcsin\()/g,
+        ' seno inverso de ',
+      );
+    } else if (textChecked.match(/(Sin|sin\()/g)) {
+      textChecked = textChecked.replace(/(Sin|sin\()/g, ' seno de ');
+    }
+    if (textChecked.includes('-')) {
+      textChecked = textChecked.replace('-', ' menos ');
     }
     if (textChecked.includes('√')) {
       textChecked = textChecked.replace('√', ' raiz cuadrada de ');

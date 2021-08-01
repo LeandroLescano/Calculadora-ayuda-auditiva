@@ -10,7 +10,7 @@ import {useFocusEffect} from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 function Historial({navigation}) {
-  const [history, setHistory] = useState({});
+  const [history, setHistory] = useState({list: []});
   const styles = StyleSheet.create({
     container: {
       display: 'flex',
@@ -31,6 +31,9 @@ function Historial({navigation}) {
       borderRadius: 5,
       elevation: 7,
     },
+    textEmpty: {
+      fontSize: 25,
+    },
     operation: {
       fontSize: 30,
       color: 'black',
@@ -50,7 +53,9 @@ function Historial({navigation}) {
   useFocusEffect(
     React.useCallback(() => {
       getHistory().then(hist => {
-        setHistory(hist);
+        if (hist !== null) {
+          setHistory(hist);
+        }
       });
     }, []),
   );
@@ -66,8 +71,7 @@ function Historial({navigation}) {
 
   return (
     <ScrollView>
-      {history.list !== undefined &&
-        history.list.length > 0 &&
+      {history.list.length > 0 ? (
         history.list.map((op, i) => {
           return (
             <View style={styles.container} key={i}>
@@ -92,7 +96,12 @@ function Historial({navigation}) {
               </TouchableHighlight>
             </View>
           );
-        })}
+        })
+      ) : (
+        <View style={styles.container}>
+          <Text style={styles.textEmpty}>Historial de operaciones vacío.</Text>
+        </View>
+      )}
     </ScrollView>
   );
 }
