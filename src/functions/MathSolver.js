@@ -424,7 +424,6 @@ export default function MathSolver() {
       let deletedWords = opTraducida.match(
         /(\d)|[-%.x+/√π()]|(lg|ln|cos|arccos|tan|acctan|sin|arcsin)/g,
       );
-      console.log(opTraducida, deletedWords);
       opTraducida = deletedWords.join('');
     } catch (e) {
       console.error(e);
@@ -434,7 +433,6 @@ export default function MathSolver() {
 
   const deteccionFuncion = (palabra, operador, opTraducida) => {
     while (opTraducida.includes(palabra)) {
-      console.log(opTraducida);
       let split = opTraducida.split(
         /(?<=[\d.])(?=[^\d.])|(?<=[^\d.])(?=[\d.])|(?<=[-+x/])(?=[^-+x/])|(?<=[^-+x/])(?=[-+x/])|(π|pi)/,
       );

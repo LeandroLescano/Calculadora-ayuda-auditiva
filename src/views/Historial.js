@@ -84,13 +84,12 @@ function Historial({navigation}) {
               <TouchableHighlight
                 style={styles.button}
                 onPress={() =>
-                  navigation.navigate('BÁSICA', {
-                    screen: 'BÁSICA',
-                    params: {
-                      operationHist: op.operation,
-                      resultHist: op.result,
-                    },
-                  })
+                  navigation.navigate(
+                    /[lglntancossin^π√]/g.test(op.operation)
+                      ? 'CIENTÍFICA'
+                      : 'BÁSICA',
+                    {operationHist: op.operation, resultHist: op.result},
+                  )
                 }>
                 <Text style={styles.buttonText}>VER</Text>
               </TouchableHighlight>

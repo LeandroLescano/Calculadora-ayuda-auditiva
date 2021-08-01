@@ -20,8 +20,9 @@ export default function ManagerDB() {
   };
 
   this.saveOperation = async (resultSave, history, operation) => {
-    let localHistory = history;
+    let localHistory = history ?? {list: []};
     let repeat = false;
+    console.log({history}, {localHistory});
     localHistory.list.map(op => {
       if (op.operation === operation && op.result === resultSave) {
         repeat = true;

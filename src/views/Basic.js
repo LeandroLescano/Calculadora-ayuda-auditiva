@@ -150,8 +150,8 @@ export default function Basic(props) {
     React.useCallback(() => {
       Voice.onSpeechResults = onSpeechResults;
       Voice.onSpeechError = onSpeechError;
-      if (histOperation !== undefined) {
-        setOperation(histOperation.params.operationHist);
+      if (histOperation !== undefined && histOperation.operationHist !== null) {
+        setOperation(histOperation.operationHist);
       }
       DB.getConfig().then(configDB => {
         if (configDB !== null) {
@@ -213,7 +213,11 @@ export default function Basic(props) {
           setOperation(operationTest);
         } else {
           setIsVoiceOperation(false);
-          if (['ALWAYS', 'ONLY_ERRORS'].indexOf(config.sound) >= 0) {
+          if (
+            [statesConfig.ALWAYS, statesConfig.ONLY_ERRORS].indexOf(
+              config.sound,
+            ) >= 0
+          ) {
             VoiceH.speak('Ingreso incorrecto');
           }
           ToastAndroid.showWithGravityAndOffset(
@@ -248,6 +252,11 @@ export default function Basic(props) {
     if (mounted) {
       setIsRecording(false);
     }
+    if (
+      [statesConfig.ALWAYS, statesConfig.ONLY_ERRORS].indexOf(config.sound) >= 0
+    ) {
+      VoiceH.speak(txt);
+    }
     ToastAndroid.showWithGravityAndOffset(
       txt,
       ToastAndroid.SHORT,
@@ -256,9 +265,13 @@ export default function Basic(props) {
       150,
     );
     return () => (mounted = false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleOperation = e => {
+    if (histOperation.operationHist !== null) {
+      props.navigation.setParams({operationHist: null, resultHist: null});
+    }
     if (
       noRepeatSymbols.indexOf(e) >= 0 &&
       operation[operation.length - 1] === e
