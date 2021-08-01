@@ -6,6 +6,7 @@ import {
   TouchableHighlight,
   StyleSheet,
   ToastAndroid,
+  Vibration,
 } from 'react-native';
 import {useFocusEffect} from '@react-navigation/native';
 import MathSolver from '../functions/MathSolver';
@@ -148,6 +149,7 @@ export default function Basic(props) {
 
   useFocusEffect(
     React.useCallback(() => {
+      operationInput.current.focus();
       Voice.onSpeechResults = onSpeechResults;
       Voice.onSpeechError = onSpeechError;
       if (histOperation !== undefined && histOperation.operationHist !== null) {
@@ -213,12 +215,11 @@ export default function Basic(props) {
           setOperation(operationTest);
         } else {
           setIsVoiceOperation(false);
-          if (
-            [statesConfig.ALWAYS, statesConfig.ONLY_ERRORS].indexOf(
-              config.sound,
-            ) >= 0
-          ) {
+          if (['ALWAYS', 'ONLY_ERRORS'].indexOf(config.sound) >= 0) {
             VoiceH.speak('Ingreso incorrecto');
+          }
+          if (['ALWAYS', 'ONLY_ERRORS'].indexOf(config.vibration) >= 0) {
+            Vibration.vibrate([200, 300, 200, 300]);
           }
           ToastAndroid.showWithGravityAndOffset(
             'INGRESO INCORRECTO',
@@ -252,10 +253,15 @@ export default function Basic(props) {
     if (mounted) {
       setIsRecording(false);
     }
-    if (
-      [statesConfig.ALWAYS, statesConfig.ONLY_ERRORS].indexOf(config.sound) >= 0
-    ) {
+    console.log(
+      ['ALWAYS', 'ONLY_ERRORS'].indexOf(config.sound) >= 0,
+      config.sound,
+    );
+    if (['ALWAYS', 'ONLY_ERRORS'].indexOf(config.sound) >= 0) {
       VoiceH.speak(txt);
+    }
+    if (['ALWAYS', 'ONLY_ERRORS'].indexOf(config.vibration) >= 0) {
+      Vibration.vibrate([200, 300, 200, 300]);
     }
     ToastAndroid.showWithGravityAndOffset(
       txt,
@@ -269,7 +275,7 @@ export default function Basic(props) {
   }, []);
 
   const handleOperation = e => {
-    if (histOperation.operationHist !== null) {
+    if (histOperation !== undefined && histOperation.operationHist !== null) {
       props.navigation.setParams({operationHist: null, resultHist: null});
     }
     if (
@@ -291,11 +297,17 @@ export default function Basic(props) {
       if (['ALWAYS', 'ONLY_RESULTS'].indexOf(config.sound) >= 0) {
         VoiceH.speak('Resultado: ' + result);
       }
+      if (['ALWAYS', 'ONLY_RESULTS'].indexOf(config.vibration) >= 0) {
+        Vibration.vibrate(500);
+      }
       setFirstZero(false);
     } else {
       setShowResult(false);
       if (['ALWAYS'].indexOf(config.sound) >= 0) {
         VoiceH.speak(e);
+      }
+      if (['ALWAYS'].indexOf(config.vibration) >= 0) {
+        Vibration.vibrate(50);
       }
       let resultOp = MathResolver.addToOperation(
         e,
@@ -304,9 +316,13 @@ export default function Basic(props) {
         operationInput,
         firstZero,
       );
-      setOperation(resultOp[0]);
-      setCursorPos(resultOp[1]);
-      setFirstZero(resultOp[2]);
+      try {
+        setOperation(resultOp[0]);
+        setCursorPos(resultOp[1]);
+        setFirstZero(resultOp[2]);
+      } catch (err) {
+        console.error(err, resultOp);
+      }
     }
   };
 
@@ -320,11 +336,17 @@ export default function Basic(props) {
           !isNaN(r)
         ) {
           VoiceH.speak('El resultado de ' + operation + ' es ' + r);
+          if (['ALWAYS', 'ONLY_RESULTS'].indexOf(config.vibration) >= 0) {
+            Vibration.vibrate(500);
+          }
         } else if (
           ['ALWAYS', 'ONLY_ERRORS'].indexOf(config.sound) >= 0 &&
           isNaN(r)
         ) {
           VoiceH.speak('El resultado de ' + operation + ' da error matemático');
+          if (['ALWAYS', 'ONLY_ERRORS'].indexOf(config.vibration) >= 0) {
+            Vibration.vibrate([200, 300, 200, 300]);
+          }
         }
         setIsVoiceOperation(false);
       }

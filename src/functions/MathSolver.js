@@ -206,9 +206,37 @@ export default function MathSolver() {
     // DELETE ONE DIGIT
     else if (input === 'DEL') {
       if (operation.length > 0) {
-        localOperation =
-          operation.slice(0, cursorPos - 1) + operation.slice(cursorPos);
-        localCursorPos = cursorPos - 1;
+        //DELETE ONE DIGIT CLASSIC
+        // localOperation =
+        //   operation.slice(0, cursorPos - 1) + operation.slice(cursorPos);
+        // localCursorPos = cursorPos - 1;
+        // ====TEST DELETE FUNCTIONS
+        let opActual = operation;
+        if (opActual.length > 0 && localCursorPos > 0) {
+          let posFuncion = contieneOperadores(opActual);
+          if (
+            posFuncion >= 0 &&
+            localCursorPos >= posFuncion &&
+            localCursorPos <= opActual.indexOf('(') + 1
+          ) {
+            if (opActual.charAt(localCursorPos) === ')') {
+              localOperation = opActual
+                .substring(0, posFuncion)
+                .concat(opActual.substring(localCursorPos + 1));
+            } else {
+              localOperation = opActual
+                .substring(0, posFuncion)
+                .concat(opActual.substring(opActual.indexOf('(') + 1));
+            }
+            localCursorPos = posFuncion;
+          } else {
+            localOperation = opActual
+              .substring(0, localCursorPos - 1)
+              .concat(opActual.substring(localCursorPos));
+            localCursorPos--;
+          }
+        }
+        //CLOSE DELETE FUNCTIONS
       }
     }
     // DIVIDE LAST NUMBER BY 100
@@ -235,34 +263,44 @@ export default function MathSolver() {
     }
     // ADD BASE 10 LOGARITHM AND NATURAL LOGARITHM
     else if (['Lg', 'Ln'].indexOf(input) >= 0) {
+      let increment = 2;
       if (localOperation !== '0') {
-        cursorPos++;
+        increment++;
       }
       localOperation =
         operation.slice(0, cursorPos) +
         input.toLowerCase() +
         '()' +
         operation.slice(cursorPos);
-      localCursorPos = cursorPos + 2;
+      console.log(operation.slice(cursorPos));
+      localCursorPos = cursorPos + increment;
     }
     // ADD TANGENT, COSENO AND SENO
     else if (['Cos', 'Tan', 'Sin'].indexOf(input) >= 0) {
+      let increment = 3;
+      if (localOperation !== '0') {
+        increment++;
+      }
       localOperation =
         operation.slice(0, cursorPos) +
         input.toLowerCase() +
         '()' +
         operation.slice(cursorPos);
-      localCursorPos = cursorPos + 3;
+      localCursorPos = cursorPos + increment;
     }
     // ADD TANGENT, COSENO AND SENO (INVERSE)
     else if (['Cos-1', 'Tan-1', 'Sin-1'].indexOf(input) >= 0) {
+      let increment = 6;
+      if (localOperation !== '0') {
+        increment++;
+      }
       localOperation =
         operation.slice(0, cursorPos) +
         'arc' +
         input.slice(0, 3).toLowerCase() +
         '()' +
         operation.slice(cursorPos);
-      localCursorPos = cursorPos + 6;
+      localCursorPos = cursorPos + increment;
     }
     // MOVE CURSOR TO RIGHT
     else if (input === 'rgt') {
@@ -321,7 +359,7 @@ export default function MathSolver() {
 
   this.simplifyOperation = function (speechList) {
     let textLetras = true;
-    let operacion;
+    let localOperation;
     speechList.every(match => {
       console.log({match});
       textLetras = true;
@@ -330,16 +368,16 @@ export default function MathSolver() {
       }
       if (!textLetras) {
         let opTraducida = match.toLowerCase();
-        opTraducida = traducirOperacion(opTraducida);
+        opTraducida = traducirlocalOperation(opTraducida);
         if (opTraducida != null) {
-          operacion = opTraducida.replace(' ', '');
+          localOperation = opTraducida.replace(' ', '');
           return false;
         }
       }
       return true;
     });
-    if (operacion !== undefined) {
-      return operacion.replace(/ /g, '');
+    if (localOperation !== undefined) {
+      return localOperation.replace(/ /g, '');
     }
     return false;
   };
@@ -362,7 +400,7 @@ export default function MathSolver() {
     return soloL;
   };
 
-  const traducirOperacion = opTraducida => {
+  const traducirlocalOperation = opTraducida => {
     if (opTraducida.includes('menos')) {
       opTraducida = opTraducida.replace('menos', '-');
     }
@@ -459,5 +497,27 @@ export default function MathSolver() {
       }
     }
     return opTraducida;
+  };
+
+  const contieneOperadores = op => {
+    let funciones = [
+      'arctan(',
+      'arcsin(',
+      'arccos(',
+      'tan(',
+      'sin(',
+      'cos(',
+      'lg(',
+      'ln(',
+    ];
+    let result = -1;
+    for (let funcion of funciones) {
+      console.log({funcion}, {op}, op.includes(funcion));
+      if (op.includes(funcion)) {
+        result = op.indexOf(funcion);
+        break;
+      }
+    }
+    return result;
   };
 }
