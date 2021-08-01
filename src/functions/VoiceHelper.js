@@ -51,6 +51,9 @@ export default function VoiceHelper() {
     if (textChecked.includes('+')) {
       textChecked = textChecked.replace('+', ' más ');
     }
+    if (textChecked.includes('x')) {
+      textChecked = textChecked.replace('x', ' por ');
+    }
     if (textChecked.includes('X^')) {
       textChecked = textChecked.replace('X^', ' elevado a la ');
     }

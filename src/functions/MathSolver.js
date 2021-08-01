@@ -347,6 +347,8 @@ export default function MathSolver() {
   const soloLetras = text => {
     if (text.includes(':') || text.includes('a las')) {
       return true;
+    } else if (text.includes('pi')) {
+      return false;
     }
     let chars = text.replace(/ /g, '').split('');
     let soloL = true;
@@ -407,10 +409,7 @@ export default function MathSolver() {
       opTraducida = opTraducida.replace('raíz de', '√');
     }
     if (opTraducida.includes('pi')) {
-      opTraducida = opTraducida.replace(
-        'pi',
-        String.valueOf(Math.PI).substring(0, 10),
-      );
+      opTraducida = opTraducida.replace('pi', 'π');
     }
     try {
       opTraducida = deteccionFuncion('logaritmo natural', 'ln', opTraducida);
@@ -422,6 +421,11 @@ export default function MathSolver() {
       opTraducida = deteccionFuncion('tangente', 'tan', opTraducida);
       opTraducida = deteccionFuncion('seno inverso', 'arcsin', opTraducida);
       opTraducida = deteccionFuncion('seno', 'sin', opTraducida);
+      let deletedWords = opTraducida.match(
+        /(\d)|[-%.x+/√π()]|(lg|ln|cos|arccos|tan|acctan|sin|arcsin)/g,
+      );
+      console.log(opTraducida, deletedWords);
+      opTraducida = deletedWords.join('');
     } catch (e) {
       console.error(e);
     }
@@ -430,11 +434,13 @@ export default function MathSolver() {
 
   const deteccionFuncion = (palabra, operador, opTraducida) => {
     while (opTraducida.includes(palabra)) {
+      console.log(opTraducida);
       let split = opTraducida.split(
-        /(?<=[\d.])(?=[^\d.])|(?<=[^\d.])(?=[\d.])|(?<=[-+x/])(?=[^-+x/])|(?<=[^-+x/])(?=[-+x/])/,
+        /(?<=[\d.])(?=[^\d.])|(?<=[^\d.])(?=[\d.])|(?<=[-+x/])(?=[^-+x/])|(?<=[^-+x/])(?=[-+x/])|(π|pi)/,
       );
       let number = '0';
       let posLog = -1;
+      console.log(split);
       for (let x = 0; x < split.length; x++) {
         if (split[x].includes(palabra)) {
           posLog = x;
