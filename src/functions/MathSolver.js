@@ -279,7 +279,6 @@ export default function MathSolver() {
     // ADD TANGENT, COSENO AND SENO
     else if (['Cos', 'Tan', 'Sin'].indexOf(input) >= 0) {
       let increment = 3;
-      console.log(cursorPos);
       if (localOperation !== '0') {
         increment++;
       } else if (cursorPos === 0) {
