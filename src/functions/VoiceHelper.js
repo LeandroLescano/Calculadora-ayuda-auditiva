@@ -44,6 +44,12 @@ export default function VoiceHelper() {
       case '^': {
         return 'Elevado a la ';
       }
+      case '(': {
+        return 'Abrir paréntesis ';
+      }
+      case ')': {
+        return 'Cerrar paréntesis ';
+      }
     }
     if (textChecked.includes('/')) {
       textChecked = textChecked.replace('/', ' dividido ');
@@ -92,6 +98,9 @@ export default function VoiceHelper() {
     }
     if (textChecked.includes('√')) {
       textChecked = textChecked.replace('√', ' raiz cuadrada de ');
+    }
+    if (textChecked.includes('^')) {
+      textChecked = textChecked.replace('^', ' elevado a la ');
     }
     return textChecked;
   };

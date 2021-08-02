@@ -266,19 +266,23 @@ export default function MathSolver() {
       let increment = 2;
       if (localOperation !== '0') {
         increment++;
+      } else if (cursorPos === 0) {
+        increment++;
       }
       localOperation =
         operation.slice(0, cursorPos) +
         input.toLowerCase() +
         '()' +
         operation.slice(cursorPos);
-      console.log(operation.slice(cursorPos));
       localCursorPos = cursorPos + increment;
     }
     // ADD TANGENT, COSENO AND SENO
     else if (['Cos', 'Tan', 'Sin'].indexOf(input) >= 0) {
       let increment = 3;
+      console.log(cursorPos);
       if (localOperation !== '0') {
+        increment++;
+      } else if (cursorPos === 0) {
         increment++;
       }
       localOperation =
@@ -292,6 +296,8 @@ export default function MathSolver() {
     else if (['Cos-1', 'Tan-1', 'Sin-1'].indexOf(input) >= 0) {
       let increment = 6;
       if (localOperation !== '0') {
+        increment++;
+      } else if (cursorPos === 0) {
         increment++;
       }
       localOperation =
@@ -361,7 +367,6 @@ export default function MathSolver() {
     let textLetras = true;
     let localOperation;
     speechList.every(match => {
-      console.log({match});
       textLetras = true;
       if (!soloLetras(match)) {
         textLetras = false;
@@ -460,7 +465,7 @@ export default function MathSolver() {
       opTraducida = deteccionFuncion('seno inverso', 'arcsin', opTraducida);
       opTraducida = deteccionFuncion('seno', 'sin', opTraducida);
       let deletedWords = opTraducida.match(
-        /(\d)|[-%.x+/√π()]|(lg|ln|cos|arccos|tan|acctan|sin|arcsin)/g,
+        /(\d)|[-%.x+/^√π()]|(lg|ln|cos|arccos|tan|acctan|sin|arcsin)/g,
       );
       opTraducida = deletedWords.join('');
     } catch (e) {
@@ -512,7 +517,6 @@ export default function MathSolver() {
     ];
     let result = -1;
     for (let funcion of funciones) {
-      console.log({funcion}, {op}, op.includes(funcion));
       if (op.includes(funcion)) {
         result = op.indexOf(funcion);
         break;

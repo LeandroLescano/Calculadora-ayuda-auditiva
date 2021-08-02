@@ -17,9 +17,9 @@ function Configuration() {
     fontSize: 48,
     fontFamily: 'normal',
     textColor: 'white',
-    buttonColor: 'black',
-    vibration: 'Siempre',
-    sound: 'Siempre',
+    buttonColor: '#1a1a1a',
+    vibration: 'ALWAYS',
+    sound: 'ALWAYS',
   });
   const DB = useMemo(() => new ManagerDB(), []);
 

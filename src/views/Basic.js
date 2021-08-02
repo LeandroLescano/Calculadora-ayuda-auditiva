@@ -34,19 +34,13 @@ export default function Basic(props) {
   const RecorderF = useMemo(() => new Recorder(), []);
   const DB = useMemo(() => new ManagerDB(), []);
   const VoiceH = new VoiceHelper();
-  const statesConfig = {
-    ALWAYS: 'Siempre',
-    ONLY_RESULTS: 'Solo resultados',
-    ONLY_ERRORS: 'Solo errores',
-    NEVER: 'Nunca',
-  };
   const [config, setConfig] = useState({
     fontSize: 48,
     fontFamily: 'Helvetica',
     textColor: 'white',
     buttonColor: '#1a1a1a',
-    vibration: statesConfig.ALWAYS,
-    sound: statesConfig.ALWAYS,
+    vibration: 'ALWAYS',
+    sound: 'ALWAYS',
   });
   const operationInput = useRef(),
     resultText = useRef();
@@ -100,7 +94,7 @@ export default function Basic(props) {
     buttonSm: {
       marginHorizontal: 2,
       marginVertical: 2,
-      backgroundColor: '#1a1a1a',
+      backgroundColor: config.buttonColor ?? '#1a1a1a',
       alignItems: 'center',
       justifyContent: 'center',
       height: '95%',
@@ -160,12 +154,20 @@ export default function Basic(props) {
           setConfig(configDB);
         }
       });
+      DB.getHistory().then(data => {
+        setHistory(data);
+      });
     }, [histOperation, DB, onSpeechResults, onSpeechError]),
   );
 
   useEffect(() => {
     DB.getHistory().then(data => {
       setHistory(data);
+    });
+    DB.getConfig().then(configDB => {
+      if (configDB !== null) {
+        setConfig(configDB);
+      }
     });
     operationInput.current.focus();
     setType(props.type);
@@ -209,7 +211,6 @@ export default function Basic(props) {
       let mounted = true;
       if (mounted) {
         setIsRecording(false);
-        console.log('onSpeechResults: ', e);
         let operationTest = MathResolver.simplifyOperation(e.value);
         if (operationTest !== false) {
           setOperation(operationTest);
@@ -297,8 +298,14 @@ export default function Basic(props) {
       if (['ALWAYS', 'ONLY_RESULTS'].indexOf(config.sound) >= 0) {
         VoiceH.speak('Resultado: ' + result);
       }
-      if (['ALWAYS', 'ONLY_RESULTS'].indexOf(config.vibration) >= 0) {
-        Vibration.vibrate(500);
+      if (result !== 'Error matemático') {
+        if (['ALWAYS', 'ONLY_RESULTS'].indexOf(config.vibration) >= 0) {
+          Vibration.vibrate(500);
+        }
+      } else {
+        if (['ALWAYS', 'ONLY_ERRORS'].indexOf(config.vibration) >= 0) {
+          Vibration.vibrate([200, 300, 200, 300]);
+        }
       }
       setFirstZero(false);
     } else {

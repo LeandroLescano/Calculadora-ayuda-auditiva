@@ -2,15 +2,15 @@
 
 export default function Recorder() {
   this.onSpeechStart = e => {
-    console.log('onSpeechStart: ', e);
+    // console.log('onSpeechStart: ', e);
   };
 
   this.onSpeechRecognized = e => {
-    console.log('onSpeechRecognized: ', e);
+    // console.log('onSpeechRecognized: ', e);
   };
 
   this.onSpeechEnd = e => {
-    console.log('onSpeechEnd: ', e);
+    // console.log('onSpeechEnd: ', e);
   };
 
   this.onSpeechError = e => {
@@ -18,12 +18,12 @@ export default function Recorder() {
   };
 
   this.onSpeechResults = e => {
-    console.log('onSpeechResults: ', e);
+    // console.log('onSpeechResults: ', e);
     return e.value;
   };
 
   this.onSpeechPartialResults = e => {
-    console.log('onSpeechPartialResults: ', e);
+    // console.log('onSpeechPartialResults: ', e);
   };
 
   this.onSpeechVolumeChanged = e => {
