@@ -60,10 +60,12 @@ export default function MathSolver() {
         associativity: 'Right',
       },
     };
-    infix = infix.replace(/\)\(/g, ')*(').replace(/(?<=\))(?=\d)/g, '*');
+    // console.warn({infix});
+    infix = infix.replace(/\)\(/g, ')*(').replace(/(\))(?=\d)/g, ')*');
     infix = infix.replace(/\s+/g, '');
-    // eslint-disable-next-line no-useless-escape
-    infix = infix.split(/([\+\-\*\/\^\(\)\√])/);
+    infix = infix.split(/([\\+\-\\*\\/\\^\\(\\)\\√])/);
+
+    console.log('post replace and split: ', {infix});
     try {
       for (var i = 0; i < infix.length; i++) {
         var token = infix[i];
@@ -103,6 +105,7 @@ export default function MathSolver() {
     while (operatorStack.length > 0) {
       outputQueue += operatorStack.pop() + ' ';
     }
+    console.log(outputQueue.replace(/ {3}/g, ' ').replace(/ {2}/g, ' ').trim());
     return outputQueue.replace(/ {3}/g, ' ').replace(/ {2}/g, ' ').trim();
   };
 
@@ -116,11 +119,27 @@ export default function MathSolver() {
         if (operation[i] === 'π') {
           aux.push(Math.PI);
         } else {
-          aux.push(operation[i]);
+          if (operation[i + 1] !== '-') {
+            aux.push(operation[i]);
+          } else if (i + 2 === operation.length) {
+            let a = aux.pop();
+            aux.push((Number(a) - Number(operation[i])) * -1);
+          } else {
+            aux.push(operation[i] * -1);
+            i++;
+          }
         }
+      } else if (
+        operation[i] === '-' &&
+        i + 1 < operation.length &&
+        isNaN(operation[i + 1])
+      ) {
+        let a = aux.pop();
+        aux.push(Number(a) * -1);
       } else {
         let a = aux.pop();
         let b;
+        console.log({aux}, {a}, {b});
         if ('lglnarctansin'.indexOf(operation[i]) === -1) {
           b = aux.pop();
         }
@@ -182,6 +201,7 @@ export default function MathSolver() {
         }
       }
     }
+    console.log({aux});
     return aux;
   };
 
@@ -325,8 +345,8 @@ export default function MathSolver() {
         input = '^';
       }
       if (
-        '+-x/'.indexOf(input) >= 0 &&
-        '+-x/'.indexOf(operation[operation.length - 1]) >= 0
+        '+x/'.indexOf(input) >= 0 &&
+        '+x/'.indexOf(operation[operation.length - 1]) >= 0
       ) {
         localOperation = operation.slice(0, -1) + input;
         localCursorPos = localOperation.length;
@@ -464,7 +484,7 @@ export default function MathSolver() {
       opTraducida = deteccionFuncion('seno inverso', 'arcsin', opTraducida);
       opTraducida = deteccionFuncion('seno', 'sin', opTraducida);
       let deletedWords = opTraducida.match(
-        /(\d)|[-%.x+/^√π()]|(lg|ln|cos|arccos|tan|acctan|sin|arcsin)/g,
+        /(\d)|[-.x+/^√π()]|(lg|ln|cos|tan|sin|arc)/g,
       );
       opTraducida = deletedWords.join('');
     } catch (e) {
@@ -474,13 +494,18 @@ export default function MathSolver() {
   };
 
   const deteccionFuncion = (palabra, operador, opTraducida) => {
-    while (opTraducida.includes(palabra)) {
-      let split = opTraducida.split(
-        /(?<=[\d.])(?=[^\d.])|(?<=[^\d.])(?=[\d.])|(?<=[-+x/])(?=[^-+x/])|(?<=[^-+x/])(?=[-+x/])|(π|pi)/,
+    let limit = 0;
+    while (opTraducida.includes(palabra) && limit <= 200) {
+      limit++;
+      // let split = opTraducida.split(
+      //   /(?<=[\d.])(?=[^\d.])|(?<=[^\d.])(?=[\d.])|(?<=[-+x/])(?=[^-+x/])|(?<=[^-+x/])(?=[-+x/])|(π|pi)/,
+      // );
+      let split = opTraducida.match(
+        /([\w\s]+(?=\d))|(\((.*?)(?=\d))|(\){1,})|([-+x^])|(?:[-+x^/])(?=[^-+x^/])|(?:[^-+^x/])(?=[-+x^/])|(\d*\.?\d*)/g,
       );
       let number = '0';
       let posLog = -1;
-      console.log(split);
+      split = split.filter(e => e !== undefined && e !== '');
       for (let x = 0; x < split.length; x++) {
         if (split[x].includes(palabra)) {
           posLog = x;

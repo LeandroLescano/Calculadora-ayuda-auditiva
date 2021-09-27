@@ -15,6 +15,7 @@ import VoiceHelper from '../functions/VoiceHelper';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import Voice from '@react-native-voice/voice';
 import Recorder from '../functions/Recorder';
+import {ScrollView} from 'react-native-gesture-handler';
 
 export default function Basic(props) {
   const histOperation =
@@ -29,6 +30,7 @@ export default function Basic(props) {
   const [history, setHistory] = useState({});
   const [isVoiceOperation, setIsVoiceOperation] = useState(false);
   const [type, setType] = useState(props.type);
+  const scrollResult = useRef(null);
   //File Functions
   const MathResolver = useMemo(() => new MathSolver(), []);
   const RecorderF = useMemo(() => new Recorder(), []);
@@ -135,6 +137,13 @@ export default function Basic(props) {
       borderRadius: 25,
       backgroundColor: 'white',
     },
+    scrollResult: {
+      height: 10,
+    },
+    scrollResultContainer: {
+      justifyContent: 'flex-end',
+      flexGrow: 1,
+    },
   });
 
   const onSelectionChange = ({nativeEvent: {selection, text}}) => {
@@ -148,6 +157,7 @@ export default function Basic(props) {
       Voice.onSpeechError = onSpeechError;
       if (histOperation !== undefined && histOperation.operationHist !== null) {
         setOperation(histOperation.operationHist);
+        setCursorPos(histOperation.operationHist.length);
       }
       DB.getConfig().then(configDB => {
         if (configDB !== null) {
@@ -189,13 +199,13 @@ export default function Basic(props) {
     }
   };
 
-  // const _stopRecognizing = async () => {
-  //   try {
-  //     await Voice.stop();
-  //   } catch (e) {
-  //     console.error(e);
-  //   }
-  // };
+  const _stopRecognizing = async () => {
+    try {
+      await Voice.stop();
+    } catch (e) {
+      console.error(e);
+    }
+  };
 
   const _destroyRecognizer = async () => {
     try {
@@ -254,10 +264,6 @@ export default function Basic(props) {
     if (mounted) {
       setIsRecording(false);
     }
-    console.log(
-      ['ALWAYS', 'ONLY_ERRORS'].indexOf(config.sound) >= 0,
-      config.sound,
-    );
     if (['ALWAYS', 'ONLY_ERRORS'].indexOf(config.sound) >= 0) {
       VoiceH.speak(txt);
     }
@@ -290,6 +296,9 @@ export default function Basic(props) {
         _startRecognizing();
         setIsRecording(true);
         setIsVoiceOperation(true);
+        setTimeout(() => {
+          _stopRecognizing();
+        }, 10000);
       }
       // SHOW RESULT
     } else if (e === '=') {
@@ -372,10 +381,12 @@ export default function Basic(props) {
         if (!isNaN(stack[0]) && stack.length <= 1) {
           if (
             stack[0] % 1 !== 0 &&
-            stack[0].toString().substr('.').length > 8
+            stack[0].toString().substring(stack[0].toString().indexOf('.'))
+              .length > 8
           ) {
-            resultSpeak = Number(stack[0]).toFixed(8);
-            setResult(Number(stack[0]).toFixed(8));
+            console.log('test');
+            resultSpeak = Number(stack[0].toFixed(8));
+            setResult(resultSpeak);
           } else {
             setResult(stack[0]);
           }
@@ -501,13 +512,22 @@ export default function Basic(props) {
         spellCheck={false}
         autoCorrect={false}
       />
-      <Text
-        style={styles.resultText}
-        ref={resultText}
-        adjustsFontSizeToFit={true}
-        numberOfLines={1}>
-        {result}
-      </Text>
+      <ScrollView
+        horizontal={true}
+        style={styles.scrollResult}
+        contentContainerStyle={styles.scrollResultContainer}
+        ref={scrollResult}
+        onContentSizeChange={() =>
+          scrollResult.current.scrollToEnd({animated: true})
+        }>
+        <Text
+          style={styles.resultText}
+          ref={resultText}
+          adjustsFontSizeToFit={true}
+          numberOfLines={1}>
+          {result}
+        </Text>
+      </ScrollView>
       {type === 'basic' ? (
         <View style={styles.layoutCalculator}>{layoutCalculator}</View>
       ) : (
