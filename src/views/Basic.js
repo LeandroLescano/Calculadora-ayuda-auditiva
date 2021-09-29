@@ -131,11 +131,26 @@ export default function Basic(props) {
     },
     textRecording: {
       fontSize: 50,
+    },
+    containerTextRecording: {
       paddingHorizontal: 10,
-      borderColor: 'black',
+      borderColor: '#1a1a1a',
       borderWidth: 2,
-      borderRadius: 25,
+      borderRadius: 10,
       backgroundColor: 'white',
+      paddingBottom: 5,
+    },
+    cancelButton: {
+      display: 'flex',
+      flexDirection: 'row',
+      justifyContent: 'center',
+    },
+    cancelText: {
+      fontSize: 20,
+    },
+    cancelIcon: {
+      alignSelf: 'center',
+      marginRight: 5,
     },
     scrollResult: {
       height: 10,
@@ -342,6 +357,15 @@ export default function Basic(props) {
     }
   };
 
+  const handleCancelRecognition = () => {
+    try {
+      Voice.cancel();
+      setIsRecording(false);
+    } catch (e) {
+      console.log(e);
+    }
+  };
+
   //Calculate operation
   useEffect(() => {
     function checkTTS(r) {
@@ -384,11 +408,10 @@ export default function Basic(props) {
             stack[0].toString().substring(stack[0].toString().indexOf('.'))
               .length > 8
           ) {
-            console.log('test');
-            resultSpeak = Number(stack[0].toFixed(8));
+            resultSpeak = Number(stack[0].toFixed(8)).toLocaleString('en-US');
             setResult(resultSpeak);
           } else {
-            setResult(stack[0]);
+            setResult(Number(stack[0]).toLocaleString('en-US'));
           }
         } else {
           setResult('Error matemático');
@@ -494,12 +517,6 @@ export default function Basic(props) {
 
   return (
     <View style={styles.container}>
-      {/* <Recorder
-        record={isRecording}
-        setIsRecording={val => setIsRecording(val)}
-        setOperation={val => setOperation(val)}
-        setIsVoiceOperation={val => setIsVoiceOperation(val)}
-      /> */}
       <TextInput
         scrollEnabled={false}
         style={styles.inputText}
@@ -535,7 +552,18 @@ export default function Basic(props) {
       )}
       {isRecording && (
         <View style={styles.recordingContainer}>
-          <Text style={styles.textRecording}>Grabando...</Text>
+          <View style={styles.containerTextRecording}>
+            <Text style={styles.textRecording}>Grabando...</Text>
+            <TouchableHighlight
+              onPress={() => handleCancelRecognition()}
+              underlayColor="lightgrey"
+              style={{borderRadius: 5}}>
+              <View style={styles.cancelButton}>
+                <Icon name="cancel" size={20} style={styles.cancelIcon} />
+                <Text style={styles.cancelText}>Cancelar</Text>
+              </View>
+            </TouchableHighlight>
+          </View>
         </View>
       )}
     </View>

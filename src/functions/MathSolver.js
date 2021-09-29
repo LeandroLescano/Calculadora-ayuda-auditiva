@@ -60,12 +60,11 @@ export default function MathSolver() {
         associativity: 'Right',
       },
     };
-    // console.warn({infix});
     infix = infix.replace(/\)\(/g, ')*(').replace(/(\))(?=\d)/g, ')*');
     infix = infix.replace(/\s+/g, '');
     infix = infix.split(/([\\+\-\\*\\/\\^\\(\\)\\√])/);
 
-    console.log('post replace and split: ', {infix});
+    // console.log('post replace and split: ', {infix});
     try {
       for (var i = 0; i < infix.length; i++) {
         var token = infix[i];
@@ -105,12 +104,15 @@ export default function MathSolver() {
     while (operatorStack.length > 0) {
       outputQueue += operatorStack.pop() + ' ';
     }
-    console.log(outputQueue.replace(/ {3}/g, ' ').replace(/ {2}/g, ' ').trim());
-    return outputQueue.replace(/ {3}/g, ' ').replace(/ {2}/g, ' ').trim();
+    // console.log(outputQueue.replace(/ +/g, ' ').trim());
+    return outputQueue.replace(/ +/g, ' ').trim();
   };
 
   this.resolveRPN = function (operation) {
     let aux = [];
+    if (operation[operation.length - 1] === '(') {
+      operation.pop();
+    }
     for (let i = 0; i < operation.length; i++) {
       if (
         (!isNaN(operation[i]) && isFinite(operation[i])) ||
@@ -121,7 +123,7 @@ export default function MathSolver() {
         } else {
           if (operation[i + 1] !== '-') {
             aux.push(operation[i]);
-          } else if (i + 2 === operation.length) {
+          } else if (aux.length > 0 && i + 2 === operation.length) {
             let a = aux.pop();
             aux.push((Number(a) - Number(operation[i])) * -1);
           } else {
@@ -139,7 +141,7 @@ export default function MathSolver() {
       } else {
         let a = aux.pop();
         let b;
-        console.log({aux}, {a}, {b});
+        // console.log({aux}, {a}, {b});
         if ('lglnarctansin'.indexOf(operation[i]) === -1) {
           b = aux.pop();
         }
@@ -201,7 +203,7 @@ export default function MathSolver() {
         }
       }
     }
-    console.log({aux});
+    // console.log({aux});
     return aux;
   };
 
